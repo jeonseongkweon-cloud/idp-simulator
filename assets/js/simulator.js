@@ -6,7 +6,7 @@
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
   let x=50,y=65,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode="basic",battery=100,completeShown=false;
-  let moveVX=0,moveVY=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,searchFound=false,fireObserved=false;
+  let moveVX=0,moveVY=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,searchFound=false,fireObserved=false,currentLevel=1; const modeLevel={basic:1,hover:2,rings:3,search:4,wildfire:5,night:6,disaster:7,patrol:8,rescue:9,master:10}; const disasterMarker=$("#disasterMarker"), patrolPoints=[$("#patrolPoint1"),$("#patrolPoint2"),$("#patrolPoint3")], masterCore=$("#masterCore");
 
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const dist=(ax,ay,bx,by)=>Math.hypot(ax-bx,(ay-by)*1.1);
@@ -26,7 +26,7 @@
   function resetEnv(){
     wildfire.classList.remove("show");target.classList.remove("show");hoverZone.classList.remove("show");
     rings.forEach(r=>{r.classList.remove("show","passed")});missingPerson.classList.remove("show");coordBox.classList.remove("show");nightBeacon.classList.remove("show");
-    view.classList.remove("night-mode","search-mode");
+    view.classList.remove("night-mode","search-mode");disasterMarker.classList.remove("show");patrolPoints.forEach(p=>p.classList.remove("show"));masterCore.classList.remove("show");
   }
   function resetCommon(){
     x=50;y=65;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();draw();
@@ -73,6 +73,34 @@
       ["NIGHT / 03","FIND BEACON","푸른 비콘 위치를 찾으십시오."],
       ["NIGHT / 04","HOLD POSITION","비콘 근처에서 3초간 정지비행하십시오."],
       ["NIGHT / 05","NIGHT LANDING","착륙장의 조명을 확인하고 안전하게 착륙하십시오."]
+    ],
+    disaster:[
+      ["LEVEL 07 / 01","TAKE OFF","재난지역 정찰을 시작하십시오."],
+      ["LEVEL 07 / 02","CLIMB TO 8m","안전한 정찰 고도를 확보하십시오."],
+      ["LEVEL 07 / 03","FIND SAFE ZONE","노란 SAFE ZONE을 찾아 접근하십시오."],
+      ["LEVEL 07 / 04","OBSERVE","3초간 안전지점을 관측하십시오."],
+      ["LEVEL 07 / 05","RETURN & LAND","정찰을 마치고 복귀하십시오."]
+    ],
+    patrol:[
+      ["LEVEL 08 / 01","TAKE OFF","안전 순찰을 시작하십시오."],
+      ["LEVEL 08 / 02","PATROL POINT 1","P1 지점을 확인하십시오."],
+      ["LEVEL 08 / 03","PATROL POINT 2","P2 지점을 확인하십시오."],
+      ["LEVEL 08 / 04","PATROL POINT 3","P3 지점을 확인하십시오."],
+      ["LEVEL 08 / 05","RETURN & LAND","순찰을 마치고 복귀하십시오."]
+    ],
+    rescue:[
+      ["LEVEL 09 / 01","TAKE OFF","종합 구조·순찰 미션을 시작하십시오."],
+      ["LEVEL 09 / 02","SEARCH TARGET","오른쪽 아래 실종자를 찾으십시오."],
+      ["LEVEL 09 / 03","CONFIRM LOCATION","3초간 위치를 확인하십시오."],
+      ["LEVEL 09 / 04","CHECK SAFE ZONE","SAFE ZONE까지 이동해 안전지점을 확인하십시오."],
+      ["LEVEL 09 / 05","RETURN & LAND","모든 임무 후 복귀하십시오."]
+    ],
+    master:[
+      ["MASTER / 01","TAKE OFF","IDP MASTER CHALLENGE를 시작하십시오."],
+      ["MASTER / 02","CLIMB TO 10m","고도 10m를 확보하십시오."],
+      ["MASTER / 03","MASTER CORE","중앙 MASTER 구역에 진입하십시오."],
+      ["MASTER / 04","HOLD 5 SECONDS","5초간 안정적인 정지비행을 유지하십시오."],
+      ["MASTER / 05","FINAL LANDING","최종 정밀착륙으로 마스터 도전을 완료하십시오."]
     ]
   };
 
@@ -86,7 +114,11 @@
       rings:["IDP / OBSTACLE","RING COURSE"],
       search:["IDP / SEARCH","MISSING PERSON SEARCH"],
       wildfire:["IDP / WILDFIRE","COORDINATE REPORT MISSION"],
-      night:["IDP / NIGHT OPS","LOW-LIGHT FLIGHT TRAINING"]
+      night:["IDP / LEVEL 6","NIGHT FLIGHT"],
+      disaster:["IDP / LEVEL 7","DISASTER RECON"],
+      patrol:["IDP / LEVEL 8","SAFETY PATROL"],
+      rescue:["IDP / LEVEL 9","INTEGRATED RESCUE & PATROL"],
+      master:["IDP / LEVEL 10","MASTER CHALLENGE"]
     };
     $("#modeTitle").textContent=labels[mode][0];$("#modeSubtitle").textContent=labels[mode][1];
     if(mode==="hover")hoverZone.classList.add("show");
@@ -94,8 +126,12 @@
     if(mode==="search"){view.classList.add("search-mode");missingPerson.classList.add("show")}
     if(mode==="wildfire"){wildfire.classList.add("show");target.classList.add("show")}
     if(mode==="night"){view.classList.add("night-mode");nightBeacon.classList.add("show")}
+    if(mode==="disaster"){disasterMarker.classList.add("show")}
+    if(mode==="patrol"){patrolPoints.forEach(p=>p.classList.add("show"))}
+    if(mode==="rescue"){missingPerson.classList.add("show");disasterMarker.classList.add("show")}
+    if(mode==="master"){masterCore.classList.add("show")}
   }
-  function open(newMode){mode=newMode;view.classList.add("open");document.body.style.overflow="hidden";resetCommon();setupMode();setMission(0);clearInterval(timerId);timerId=setInterval(tick,250);window.IDPTone?.(450,.18)}
+  function open(newMode,levelOverride){mode=newMode;currentLevel=levelOverride||modeLevel[mode]||1;view.classList.add("open");document.body.style.overflow="hidden";resetCommon();setupMode();setMission(0);clearInterval(timerId);timerId=setInterval(tick,250);window.IDPTone?.(450,.18)}
   function close(){view.classList.remove("open");document.body.style.overflow="";clearInterval(timerId)}
   function toggleFlight(){
     if(!flying){flying=true;alt=Math.max(1,alt);addScore(200,"TAKE OFF");setMission(1)}
@@ -127,6 +163,8 @@
       if(mode==="wildfire"&&stage===1&&alt>=8){addScore(300,"ALTITUDE");setMission(2)}
       if(mode==="night"&&stage===1&&alt>=5){addScore(250,"ALTITUDE");setMission(2)}
       if(mode==="rings"&&stage===1&&alt>=4){setMission(1)}
+      if(mode==="disaster"&&stage===1&&alt>=8){addScore(300,"ALTITUDE");setMission(2)}
+      if(mode==="master"&&stage===1&&alt>=10){addScore(400,"ALTITUDE");setMission(2)}
     }
     if(e.key==="ArrowDown"){alt=clamp(alt-.5,0,30);y+=.25}
     if(e.key==="ArrowLeft")rot-=7;if(e.key==="ArrowRight")rot+=7;
@@ -177,26 +215,49 @@
         else hold=0
       }
     }
+    if(mode==="disaster"&&flying){
+      const d=dist(x,y,73,57);
+      if(stage===2&&d<12){addScore(500,"SAFE ZONE FOUND");setMission(3);hold=0}
+      if(stage===3){if(d<10){hold+=.25;text.textContent=`안전지점 관측 중... ${Math.min(3,hold).toFixed(1)} / 3.0초`;if(hold>=3){addScore(600,"RECON COMPLETE");setMission(4)}}else hold=0}
+    }
+    if(mode==="patrol"&&flying){
+      const pts=[[24,52],[55,39],[80,61]];
+      if(stage>=1&&stage<=3){const idx=stage-1;if(dist(x,y,pts[idx][0],pts[idx][1])<9){addScore(450,`PATROL P${idx+1}`);patrolPoints[idx].style.opacity=".25";setMission(stage+1)}}
+    }
+    if(mode==="rescue"&&flying){
+      if(stage===1&&dist(x,y,84,72)<14){addScore(550,"TARGET FOUND");setMission(2);hold=0}
+      if(stage===2){const d=dist(x,y,84,72);if(d<12){hold+=.25;text.textContent=`위치 확인 중... ${Math.min(3,hold).toFixed(1)} / 3.0초`;if(hold>=3){addScore(550,"LOCATION CONFIRMED");setMission(3)}}else hold=0}
+      if(stage===3&&dist(x,y,73,57)<12){addScore(600,"SAFE ZONE CHECKED");setMission(4)}
+    }
+    if(mode==="master"&&flying){
+      const d=dist(x,y,50,48);
+      if(stage===2&&d<11){addScore(700,"MASTER CORE");setMission(3);hold=0}
+      if(stage===3){if(d<10&&Math.abs(alt-10)<2&&(Date.now()-lastMove>350)){hold+=.25;text.textContent=`마스터 호버링... ${Math.min(5,hold).toFixed(1)} / 5.0초`;if(hold>=5){addScore(900,"MASTER HOLD");setMission(4)}}else hold=Math.max(0,hold-.5)}
+    }
     draw();
   }
 
   function finish(landingBonus){
     if(completeShown)return;completeShown=true;const sec=Math.floor((Date.now()-start)/1000),timeBonus=Math.round(clamp(500-sec*4,100,500));score+=timeBonus;
-    const maxByMode={basic:2000,hover:2200,rings:2500,search:2700,wildfire:2750,night:2500};
+    const maxByMode={basic:2000,hover:2200,rings:2500,search:2700,wildfire:2750,night:2500,disaster:2600,patrol:2650,rescue:2900,master:3300};
     const ratio=score/maxByMode[mode],stars=ratio>=.82?3:ratio>=.62?2:1;
-    const titles={basic:"LEVEL 1 COMPLETE",hover:"LEVEL 2 HOVERING PASS",rings:"RING COURSE COMPLETE",search:"SEARCH MISSION COMPLETE",wildfire:"WILDFIRE REPORT COMPLETE",night:"NIGHT FLIGHT COMPLETE"};
+    const titles={basic:"LEVEL 1 COMPLETE",hover:"LEVEL 2 HOVERING PASS",rings:"LEVEL 3 RING COURSE COMPLETE",search:"LEVEL 4 SEARCH COMPLETE",wildfire:"LEVEL 5 WILDFIRE REPORT COMPLETE",night:"LEVEL 6 NIGHT FLIGHT COMPLETE",disaster:"LEVEL 7 DISASTER RECON COMPLETE",patrol:"LEVEL 8 PATROL COMPLETE",rescue:"LEVEL 9 INTEGRATED MISSION COMPLETE",master:"IDP MASTER CHALLENGE COMPLETE"};
     const messages={
       basic:"기초 비행과 정밀 착륙 훈련을 완료했습니다.",
       hover:"10초 정지비행과 착륙 시험을 완료했습니다.",
       rings:"장애물 링 3개를 통과하고 안전하게 복귀했습니다.",
       search:"실종자 위치를 확인하고 안전하게 복귀했습니다.",
       wildfire:"산불 좌표를 확인·보고하고 복귀했습니다.",
-      night:"저조도 비콘 확인과 야간 착륙을 완료했습니다."
+      night:"저조도 비콘 확인과 야간 착륙을 완료했습니다.",
+      disaster:"재난지역 안전지점 정찰과 복귀를 완료했습니다.",
+      patrol:"지정된 3개 순찰지점을 모두 확인했습니다.",
+      rescue:"수색·위치확인·안전지점 점검을 결합한 종합 미션을 완료했습니다.",
+      master:"IDP 10단계 종합 훈련의 MASTER CHALLENGE를 완료했습니다."
     };
     $("#completeTitle").textContent=titles[mode];$("#stars").textContent="★".repeat(stars)+"☆".repeat(3-stars);$("#finalScore").textContent=Math.round(score);$("#finalTime").textContent=nowTime();$("#landingQuality").textContent=landingBonus>=700?"S":landingBonus>=550?"A":"B";$("#completeMessage").textContent=messages[mode];
-    setTimeout(()=>$("#completeModal").classList.add("open"),700);window.IDPTone?.(880,.4)
+    window.IDPProgress?.unlockNext(currentLevel);setTimeout(()=>$("#completeModal").classList.add("open"),700);window.IDPTone?.(880,.4)
   }
   $("#exitSim").onclick=close;$("#pauseBtn").onclick=()=>{paused=!paused;$("#pauseBtn").textContent=paused?"RESUME":"PAUSE"};
-  $("#retryBtn").onclick=()=>{$("#completeModal").classList.remove("open");open(mode)};$("#homeBtn").onclick=()=>{$("#completeModal").classList.remove("open");close()};
+  $("#retryBtn").onclick=()=>{$("#completeModal").classList.remove("open");open(mode,currentLevel)};$("#homeBtn").onclick=()=>{$("#completeModal").classList.remove("open");close()};
   window.IDPSim={open,close};
 })();

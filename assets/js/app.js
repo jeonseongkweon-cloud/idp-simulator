@@ -12,18 +12,52 @@
   $("#fullscreenBtn").onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();else await document.exitFullscreen?.()};
   function openModal(id){$(id).classList.add("open");tone(360,.1)}
   function closeModals(){$$(".modal").forEach(m=>m.classList.remove("open"))}
-  $$("[data-close]").forEach(b=>b.onclick=closeModals); $$(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeModals()});
+  $$("[data-close]").forEach(b=>b.onclick=closeModals);$$(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeModals()});
+
+  function progress(){return Math.max(1,Math.min(10,parseInt(localStorage.getItem("idp_unlocked_level")||"1",10)))}
+  function setProgress(level){localStorage.setItem("idp_unlocked_level",String(Math.max(progress(),Math.min(10,level))));renderProgress()}
+  function renderProgress(){
+    const unlocked=progress();
+    $$(".level-card").forEach(card=>{
+      const level=parseInt(card.dataset.level,10), locked=level>unlocked;
+      card.classList.toggle("locked",locked);
+      const state=card.querySelector(".lock-state"),btn=card.querySelector(".level-start");
+      if(locked){state.textContent="🔒 LOCK";btn.textContent=`LEVEL ${level-1} 통과 필요`}
+      else{
+        state.textContent=level<unlocked?"✓ PASSED":"OPEN";
+        btn.textContent=level<unlocked?"다시 훈련 →":"도전 시작 →";
+      }
+    });
+    $("#progressText").textContent=`LEVEL ${unlocked} / 10`;
+  }
+  function locked(level){
+    $("#lockedTitle").textContent=`LEVEL ${level} LOCKED`;
+    $("#lockedMessage").textContent=`LEVEL ${level-1}을 먼저 통과해야 LEVEL ${level}이 열립니다.`;
+    openModal("#lockedModal");
+  }
+  function startLevel(level,mode){
+    if(level>progress()){locked(level);return}
+    window.IDPSim?.open(mode,level);
+  }
+  $$(".level-card").forEach(card=>card.addEventListener("click",e=>{
+    if(e.target.closest(".level-start")||e.currentTarget===card){
+      startLevel(parseInt(card.dataset.level,10),card.dataset.mode);
+    }
+  }));
+  $("#goCurrentLevel").onclick=()=>{closeModals();document.getElementById("training").scrollIntoView({behavior:"smooth"})};
+  $("#resetProgress").onclick=()=>{if(confirm("훈련 진행 기록을 LEVEL 1부터 다시 시작할까요?")){localStorage.setItem("idp_unlocked_level","1");renderProgress()}};
+
   $$("[data-open]").forEach(el=>el.onclick=e=>{
     const t=e.currentTarget.dataset.open;
     if(t==="login")openModal("#loginModal");
     if(t==="guide")openModal("#guideModal");
-    if(t==="simulator")window.IDPSim.open("basic");
-    if(t==="hover")window.IDPSim.open("hover");
-    if(t==="rings")window.IDPSim.open("rings");
-    if(t==="search")window.IDPSim.open("search");
-    if(t==="wildfire")window.IDPSim.open("wildfire");
-    if(t==="night")window.IDPSim.open("night");
+    if(t==="simulator")startLevel(1,"basic");
+    if(t==="hover")startLevel(2,"hover");
+    if(t==="wildfire")startLevel(5,"wildfire");
   });
   $("#verifyId").onclick=()=>{const id=$("#memberId").value.trim().toUpperCase(),out=$("#loginResult");if(["IDP2026","IDP-KR-000001"].includes(id)){out.innerHTML=`✅ 인증 성공: <b>${id}</b>`;tone(720,.2)}else{out.innerHTML=`❌ 데모 ID <b>IDP2026</b>을 입력해 보세요.`;tone(130,.2,"square")}};
+
   window.IDPTone=tone;
+  window.IDPProgress={get:progress,unlockNext:(completedLevel)=>setProgress(Math.min(10,completedLevel+1)),render:renderProgress};
+  renderProgress();
 })();

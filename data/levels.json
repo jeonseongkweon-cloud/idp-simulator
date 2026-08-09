@@ -1,35 +1,67 @@
 {
-  "version": "3.0",
-  "modes": [
+  "version": "4.0",
+  "unlock_rule": "Complete previous level to unlock next level",
+  "storage": "localStorage:idp_unlocked_level",
+  "levels": [
     {
-      "id": "basic",
-      "name": "LEVEL 1 Basic Flight",
-      "public": true
+      "level": 1,
+      "mode": "basic",
+      "name": "기초 비행",
+      "tier": "BASIC"
     },
     {
-      "id": "hover",
-      "name": "LEVEL 2 Hovering Test",
-      "public": true
+      "level": 2,
+      "mode": "hover",
+      "name": "호버링 시험",
+      "tier": "BASIC"
     },
     {
-      "id": "rings",
-      "name": "Obstacle Ring Course",
-      "public": true
+      "level": 3,
+      "mode": "rings",
+      "name": "장애물 링 통과",
+      "tier": "BASIC"
     },
     {
-      "id": "search",
-      "name": "Missing Person Search",
-      "public": true
+      "level": 4,
+      "mode": "search",
+      "name": "실종자 수색",
+      "tier": "OPERATOR"
     },
     {
-      "id": "wildfire",
-      "name": "Wildfire Coordinate Report",
-      "public": true
+      "level": 5,
+      "mode": "wildfire",
+      "name": "산불 좌표 보고",
+      "tier": "OPERATOR"
     },
     {
-      "id": "night",
-      "name": "Night Flight",
-      "public": true
+      "level": 6,
+      "mode": "night",
+      "name": "야간 비행",
+      "tier": "OPERATOR"
+    },
+    {
+      "level": 7,
+      "mode": "disaster",
+      "name": "재난지역 정찰",
+      "tier": "PATROL"
+    },
+    {
+      "level": 8,
+      "mode": "patrol",
+      "name": "안전 순찰 임무",
+      "tier": "PATROL"
+    },
+    {
+      "level": 9,
+      "mode": "rescue",
+      "name": "종합 구조·순찰",
+      "tier": "PATROL"
+    },
+    {
+      "level": 10,
+      "mode": "master",
+      "name": "IDP MASTER CHALLENGE",
+      "tier": "MASTER"
     }
   ]
 }

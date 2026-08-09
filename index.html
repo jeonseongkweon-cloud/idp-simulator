@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020711">
-  <title>IDP Drone Simulator v3.0</title>
+  <title>IDP Drone Simulator v4.0</title>
   <link rel="icon" href="assets/img/idp-logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -14,7 +14,7 @@
     <div class="boot-card">
       <img src="assets/img/idp-logo.png" class="boot-logo" alt="IDP">
       <p class="micro">INTERNATIONAL DRONE PATROL</p>
-      <h1>IDP DRONE SIMULATOR <span class="vtag">v3.0</span></h1>
+      <h1>IDP DRONE SIMULATOR <span class="vtag">v4.0</span></h1>
       <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
       <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
       <small>v2.0 · Realistic Flight / Wildfire Mission / Scoring</small>
@@ -24,7 +24,7 @@
   <header class="topbar">
     <a class="brand" href="#home">
       <img src="assets/img/idp-logo.png" alt="">
-      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v3.0</small></span>
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v4.0</small></span>
     </a>
     <nav>
       <a href="#training">TRAINING</a>
@@ -47,12 +47,11 @@
         <p class="eyebrow">A SAFE WORLD, OUR MISSION</p>
         <h2>INTERNATIONAL<br><span>DRONE PATROL</span></h2>
         <h3>국제드론순찰대 드론 시뮬레이터</h3>
-        <p class="hero-copy">기초 비행 · 산불 감시 · 순찰 · 재난 대응 훈련</p>
+        <p class="hero-copy">LEVEL 1부터 LEVEL 10 MASTER까지 단계별 드론 훈련</p>
         <div class="hero-actions">
-          <button class="btn btn-blue" data-open="simulator">초급 체험 <small>LEVEL 1 · 누구나 이용 가능</small></button>
-          <button class="btn btn-gold" data-open="hover">LEVEL 2 호버링 <small>정밀 정지비행 시험</small></button>
-          <button class="btn btn-gold" data-open="wildfire">산불 감시 <small>연기 탐지 · 좌표 보고</small></button>
-          <button class="btn btn-gold" data-open="login">ID 로그인 <small>회원 교육과정 확장용</small></button>
+          <button class="btn btn-blue" onclick="document.getElementById('training').scrollIntoView({behavior:'smooth'})">10 LEVEL 훈련 시작 <small>LEVEL MAP에서 단계별 도전</small></button>
+          <button class="btn btn-gold" data-open="simulator">LEVEL 1 무료 체험 <small>누구나 이용 가능</small></button>
+          <button class="btn btn-gold" data-open="login">ID 로그인 <small>회원 기록 연동 준비</small></button>
         </div>
         <div class="progress-strip">
           <span><b>01</b> 이륙</span><i>›</i><span><b>02</b> 5m 상승</span><i>›</i>
@@ -62,52 +61,76 @@
       </div>
     </section>
 
-    <section class="command-grid missions-grid" id="training">
-      <article class="command-card blue">
-        <span class="card-icon">✦</span><p>TRAINING</p><h4>LEVEL 1 기초 비행</h4>
-        <small>이륙 · 상승 · 전진 · 정밀착륙</small>
-        <button data-open="simulator">훈련 시작 →</button>
-      </article>
-      <article class="command-card cyan">
-        <span class="card-icon">◎</span><p>LEVEL 2</p><h4>호버링 시험</h4>
-        <small>지정 구역에서 10초 정지비행</small>
-        <button data-open="hover">시험 시작 →</button>
-      </article>
-      <article class="command-card green">
-        <span class="card-icon">⭕</span><p>OBSTACLE</p><h4>장애물 링 통과</h4>
-        <small>3개의 링을 순서대로 통과</small>
-        <button data-open="rings">도전 시작 →</button>
-      </article>
-      <article class="command-card purple">
-        <span class="card-icon">🔎</span><p>SEARCH</p><h4>실종자 수색</h4>
-        <small>수색구역 탐색 · 대상 발견 · 복귀</small>
-        <button data-open="search">수색 시작 →</button>
-      </article>
-      <article class="command-card orange">
-        <span class="card-icon">🔥</span><p>WILDFIRE</p><h4>산불 좌표 보고</h4>
-        <small>연기 탐지 · 좌표 확인 · 안전 보고</small>
-        <button data-open="wildfire">미션 시작 →</button>
-      </article>
-      <article class="command-card night">
-        <span class="card-icon">🌙</span><p>NIGHT OPS</p><h4>야간 비행</h4>
-        <small>저조도 환경 · 비콘 확인 · 안전 착륙</small>
-        <button data-open="night">야간 훈련 →</button>
-      </article>
-      <article class="command-card green" id="practice">
-        <span class="card-icon">◇</span><p>PRACTICE</p><h4>자유 연습</h4>
-        <small>키보드 비행 감각 반복 훈련</small>
-        <button data-open="simulator">연습 시작 →</button>
-      </article>
-      <article class="command-card purple" id="ranking">
-        <span class="card-icon">♛</span><p>SCORING</p><h4>점수 & 별점</h4>
-        <small>정확도 · 시간 · 미션 수행 평가</small>
-        <button data-open="guide">평가 방식 →</button>
-      </article>
-      <article class="command-card cyan" id="guide">
-        <span class="card-icon">▤</span><p>GUIDE</p><h4>조종 가이드</h4>
-        <small>WASD · 방향키 · SPACE</small>
-        <button data-open="guide">자세히 보기 →</button>
-      </article>
+    <section class="level-map-section" id="training">
+      <div class="level-map-head">
+        <div>
+          <p class="micro">IDP DRONE TRAINING SYSTEM</p>
+          <h3>10 LEVEL PROGRAM</h3>
+          <p>모든 단계는 미리 공개됩니다. 이전 레벨을 통과해야 다음 단계가 열립니다.</p>
+        </div>
+        <div class="progress-summary">
+          <span>현재 진행</span><b id="progressText">LEVEL 1 / 10</b>
+          <button id="resetProgress" class="mini-btn">진행 초기화</button>
+        </div>
+      </div>
+      <div class="level-map">
+        <article class="level-card tier-basic" data-level="1" data-mode="basic">
+          <div class="level-top"><span>LEVEL 01</span><em class="lock-state">OPEN</em></div>
+          <div class="level-icon">🛫</div><h4>기초 비행</h4><p>이륙 · 상승 · 전진 · 정밀착륙</p>
+          <button class="level-start">훈련 시작 →</button>
+        </article>
+        <article class="level-card tier-basic locked" data-level="2" data-mode="hover">
+          <div class="level-top"><span>LEVEL 02</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🎯</div><h4>호버링 시험</h4><p>지정 구역에서 10초 정지비행</p>
+          <button class="level-start">LEVEL 1 통과 필요</button>
+        </article>
+        <article class="level-card tier-basic locked" data-level="3" data-mode="rings">
+          <div class="level-top"><span>LEVEL 03</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">⭕</div><h4>장애물 링 통과</h4><p>3개의 링을 순서대로 정확히 통과</p>
+          <button class="level-start">LEVEL 2 통과 필요</button>
+        </article>
+        <article class="level-card tier-operator locked" data-level="4" data-mode="search">
+          <div class="level-top"><span>LEVEL 04</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🔎</div><h4>실종자 수색</h4><p>수색구역 탐색 · 위치 확인 · 복귀</p>
+          <button class="level-start">LEVEL 3 통과 필요</button>
+        </article>
+        <article class="level-card tier-operator locked" data-level="5" data-mode="wildfire">
+          <div class="level-top"><span>LEVEL 05</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🔥</div><h4>산불 좌표 보고</h4><p>연기 탐지 · 현장 관측 · 좌표 보고</p>
+          <button class="level-start">LEVEL 4 통과 필요</button>
+        </article>
+        <article class="level-card tier-operator locked" data-level="6" data-mode="night">
+          <div class="level-top"><span>LEVEL 06</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🌙</div><h4>야간 비행</h4><p>저조도 비콘 탐지 · 야간 착륙</p>
+          <button class="level-start">LEVEL 5 통과 필요</button>
+        </article>
+        <article class="level-card tier-patrol locked" data-level="7" data-mode="disaster">
+          <div class="level-top"><span>LEVEL 07</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🚨</div><h4>재난지역 정찰</h4><p>위험구역 탐색 · 안전지점 확인 · 보고</p>
+          <button class="level-start">LEVEL 6 통과 필요</button>
+        </article>
+        <article class="level-card tier-patrol locked" data-level="8" data-mode="patrol">
+          <div class="level-top"><span>LEVEL 08</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🛡️</div><h4>안전 순찰 임무</h4><p>지정 순찰지점 확인 · 이상 유무 보고</p>
+          <button class="level-start">LEVEL 7 통과 필요</button>
+        </article>
+        <article class="level-card tier-patrol locked" data-level="9" data-mode="rescue">
+          <div class="level-top"><span>LEVEL 09</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🌐</div><h4>종합 구조·순찰</h4><p>수색 · 관측 · 복귀를 결합한 종합 미션</p>
+          <button class="level-start">LEVEL 8 통과 필요</button>
+        </article>
+        <article class="level-card tier-master locked master-card" data-level="10" data-mode="master">
+          <div class="level-top"><span>LEVEL 10</span><em class="lock-state">🔒 LOCK</em></div>
+          <div class="level-icon">🏆</div><h4>IDP MASTER CHALLENGE</h4><p>10단계 종합 평가 · 최종 마스터 도전</p>
+          <button class="level-start">LEVEL 9 통과 필요</button>
+        </article>
+      </div>
+      <div class="tier-legend">
+        <span><i class="dot basic"></i> BASIC · LEVEL 1–3</span>
+        <span><i class="dot operator"></i> OPERATOR · LEVEL 4–6</span>
+        <span><i class="dot patrol"></i> PATROL · LEVEL 7–9</span>
+        <span><i class="dot master"></i> MASTER · LEVEL 10</span>
+      </div>
     </section>
   </main>
 
@@ -120,6 +143,17 @@
       <a href="tel:+8228221822">☏ 국제문의 +82-2-822-1822</a>
     </div>
   </footer>
+
+  <div id="lockedModal" class="modal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>×</button>
+      <div class="lock-big">🔒</div>
+      <p class="micro">LEVEL LOCKED</p>
+      <h3 id="lockedTitle">LEVEL 2 LOCKED</h3>
+      <p id="lockedMessage">LEVEL 1을 먼저 통과하십시오.</p>
+      <button id="goCurrentLevel" class="btn btn-blue">현재 도전 가능한 레벨로 이동</button>
+    </div>
+  </div>
 
   <div id="loginModal" class="modal">
     <div class="modal-card">
@@ -190,6 +224,11 @@
       <div id="missingPerson" class="missing-person"><div class="person-head"></div><div class="person-body"></div><span>MISSING PERSON</span></div>
       <div id="coordBox" class="coord-box">LAT <b>35.5392</b><br>LON <b>129.3114</b></div>
       <div id="nightBeacon" class="night-beacon"><i></i><span>SAFE BEACON</span></div>
+      <div id="disasterMarker" class="generic-marker disaster-marker"><span>SAFE ZONE</span></div>
+      <div id="patrolPoint1" class="generic-marker patrol-marker ppoint1"><span>P1</span></div>
+      <div id="patrolPoint2" class="generic-marker patrol-marker ppoint2"><span>P2</span></div>
+      <div id="patrolPoint3" class="generic-marker patrol-marker ppoint3"><span>P3</span></div>
+      <div id="masterCore" class="generic-marker master-marker"><span>MASTER</span></div>
 
       <div id="drone" class="real-drone">
         <div class="drone-shadow"></div>
