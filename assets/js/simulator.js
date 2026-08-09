@@ -1,22 +1,55 @@
 
 (() => {
   const $=s=>document.querySelector(s);
-  const view=$("#simulatorView"),drone=$("#drone"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery");
+  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery");
   const title=$("#missionTitle"),text=$("#missionText"),missionNo=$("#missionNo"),flash=$("#missionFlash"),warning=$("#warning");
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
   let x=50,y=65,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode="basic",battery=100,completeShown=false;
-  let moveVX=0,moveVY=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,searchFound=false,fireObserved=false,currentLevel=1; const modeLevel={basic:1,hover:2,rings:3,search:4,wildfire:5,night:6,disaster:7,patrol:8,rescue:9,master:10}; const disasterMarker=$("#disasterMarker"), patrolPoints=[$("#patrolPoint1"),$("#patrolPoint2"),$("#patrolPoint3")], masterCore=$("#masterCore");
+  let moveVX=0,moveVY=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,searchFound=false,fireObserved=false,currentLevel=1, motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0; const modeLevel={basic:1,hover:2,rings:3,search:4,wildfire:5,night:6,disaster:7,patrol:8,rescue:9,master:10}; const disasterMarker=$("#disasterMarker"), patrolPoints=[$("#patrolPoint1"),$("#patrolPoint2"),$("#patrolPoint3")], masterCore=$("#masterCore");
+
+
+  function initMotorAudio(){
+    try{
+      motorCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+      if(motorCtx.state==="suspended")motorCtx.resume();
+      if(!motorOsc){
+        motorOsc=motorCtx.createOscillator();motorGain=motorCtx.createGain();motorFilter=motorCtx.createBiquadFilter();
+        motorOsc.type="sawtooth";motorOsc.frequency.value=70;motorFilter.type="lowpass";motorFilter.frequency.value=850;
+        motorGain.gain.value=.0001;motorOsc.connect(motorFilter);motorFilter.connect(motorGain);motorGain.connect(motorCtx.destination);motorOsc.start();
+      }
+    }catch(e){}
+  }
+  function setMotor(level,boost=0){
+    motorLevel=clamp(level,0,1);initMotorAudio();
+    if(motorOsc&&motorGain){
+      const t=motorCtx.currentTime;
+      const freq=70+motorLevel*115+boost*28;
+      motorOsc.frequency.cancelScheduledValues(t);motorOsc.frequency.linearRampToValueAtTime(freq,t+.08);
+      motorGain.gain.cancelScheduledValues(t);motorGain.gain.linearRampToValueAtTime(.004+motorLevel*.026,t+.08);
+      motorFilter.frequency.linearRampToValueAtTime(700+motorLevel*1500,t+.08);
+    }
+    if(rpmText)rpmText.textContent=motorLevel<.05?"IDLE":`${Math.round(1800+motorLevel*7200)} RPM`;
+  }
+  function motorOff(){
+    if(motorGain&&motorCtx){const t=motorCtx.currentTime;motorGain.gain.cancelScheduledValues(t);motorGain.gain.linearRampToValueAtTime(.0001,t+.5)}
+    if(rpmText)rpmText.textContent="IDLE";
+  }
+  function impactTone(freq=105,dur=.13){window.IDPTone?.(freq,dur,"square")}
 
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const dist=(ax,ay,bx,by)=>Math.hypot(ax-bx,(ay-by)*1.1);
   function nowTime(){const sec=Math.floor((Date.now()-start)/1000);return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`}
   function draw(){
-    const scale=1+alt*.006;
+    const scale=1+alt*.008;
+    const activeMove=(Date.now()-lastMove<240)&&flying;
     drone.style.left=x+"%";drone.style.top=y+"%";
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${scale})`;
-    drone.classList.toggle("flying",flying);drone.classList.toggle("fast",(Date.now()-lastMove<180));
-    const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.2-alt*.025,.35,1.2)})`;shadow.style.opacity=clamp(1-alt*.025,.15,.8);
+    drone.classList.toggle("flying",flying);drone.classList.toggle("fast",activeMove);
+    drone.classList.toggle("idle-wobble",flying&&!activeMove);
+    flightArea.classList.toggle("speeding",activeMove&&Math.hypot(moveVX,moveVY)>0);
+    speedLines.classList.toggle("active",activeMove&&Math.hypot(moveVX,moveVY)>0);
+    const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.35-alt*.028,.28,1.35)})`;shadow.style.opacity=clamp(.82-alt*.025,.12,.82);shadow.style.filter=`blur(${clamp(5+alt*.38,5,18)}px)`;
     altEl.textContent=alt.toFixed(1);spdEl.textContent=((Date.now()-lastMove<220&&flying)?Math.min(8,Math.hypot(moveVX,moveVY)*2.3+2.2):0).toFixed(1);
     hdgEl.textContent=String((Math.round(rot)%360+360)%360).padStart(3,"0");scoreEl.textContent=String(Math.max(0,Math.round(score))).padStart(4,"0");batteryEl.textContent=Math.max(0,Math.round(battery));
   }
@@ -29,7 +62,7 @@
     view.classList.remove("night-mode","search-mode");disasterMarker.classList.remove("show");patrolPoints.forEach(p=>p.classList.remove("show"));masterCore.classList.remove("show");
   }
   function resetCommon(){
-    x=50;y=65;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();draw();
+    x=50;y=65;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();drone.classList.remove("climbing","landing");motorOff();draw();
   }
 
   const missionSets={
@@ -132,13 +165,13 @@
     if(mode==="master"){masterCore.classList.add("show")}
   }
   function open(newMode,levelOverride){mode=newMode;currentLevel=levelOverride||modeLevel[mode]||1;view.classList.add("open");document.body.style.overflow="hidden";resetCommon();setupMode();setMission(0);clearInterval(timerId);timerId=setInterval(tick,250);window.IDPTone?.(450,.18)}
-  function close(){view.classList.remove("open");document.body.style.overflow="";clearInterval(timerId)}
+  function close(){view.classList.remove("open");document.body.style.overflow="";clearInterval(timerId);motorOff()}
   function toggleFlight(){
-    if(!flying){flying=true;alt=Math.max(1,alt);addScore(200,"TAKE OFF");setMission(1)}
+    if(!flying){initMotorAudio();setMotor(.55,.15);window.IDPTone?.(180,.12,"sawtooth");setTimeout(()=>window.IDPTone?.(260,.18,"sine"),120);flying=true;alt=Math.max(1,alt);drone.classList.add("climbing");setTimeout(()=>drone.classList.remove("climbing"),700);addScore(200,"TAKE OFF");setMission(1)}
     else{
       const nearPad=Math.abs(x-50)<8&&y>74;
       if(alt<=1.4&&nearPad){
-        flying=false;alt=0;const err=Math.hypot(x-50,(y-82)*.7),bonus=Math.round(clamp(800-err*45,350,800));addScore(bonus,"LANDING");
+        drone.classList.add("landing");setMotor(.25);window.IDPTone?.(120,.16,"sine");setTimeout(()=>{motorOff();drone.classList.remove("landing")},500);flying=false;alt=0;const err=Math.hypot(x-50,(y-82)*.7),bonus=Math.round(clamp(800-err*45,350,800));addScore(bonus,"LANDING");
         const last=missionSets[mode].length-1;if(stage===last||mode==="basic")finish(bonus)
       }else warn("착륙장 H 근처에서 고도를 1m 이하로 낮추세요");
     }draw();
@@ -151,11 +184,11 @@
     if(e.code==="Space"){if(!paused)toggleFlight();return}
     if(paused||!flying)return;
     const step=1.8;lastMove=Date.now();moveVX=moveVY=0;
-    if(k==="w"){y-=step;moveVY=-1;tiltY=-12;if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
-    if(k==="s"){y+=step;moveVY=1;tiltY=12}
-    if(k==="a"){x-=step;moveVX=-1;tiltX=-13}
-    if(k==="d"){x+=step;moveVX=1;tiltX=13}
-    if(e.key==="ArrowUp"){
+    if(k==="w"){y-=step;moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
+    if(k==="s"){y+=step;moveVY=1;tiltY=18;setMotor(.67,.10)}
+    if(k==="a"){x-=step;moveVX=-1;tiltX=-17;setMotor(.69,.12)}
+    if(k==="d"){x+=step;moveVX=1;tiltX=17;setMotor(.69,.12)}
+    if(e.key==="ArrowUp"){drone.classList.add("climbing");setMotor(.82,.2);setTimeout(()=>drone.classList.remove("climbing"),220);
       alt=clamp(alt+.5,0,30);y-=.25;
       if(mode==="basic"&&stage===1&&alt>=5){addScore(250,"ALTITUDE");setMission(2)}
       if(mode==="hover"&&stage===1&&alt>=6){addScore(300,"ALTITUDE");setMission(2)}
@@ -166,15 +199,15 @@
       if(mode==="disaster"&&stage===1&&alt>=8){addScore(300,"ALTITUDE");setMission(2)}
       if(mode==="master"&&stage===1&&alt>=10){addScore(400,"ALTITUDE");setMission(2)}
     }
-    if(e.key==="ArrowDown"){alt=clamp(alt-.5,0,30);y+=.25}
-    if(e.key==="ArrowLeft")rot-=7;if(e.key==="ArrowRight")rot+=7;
-    x=clamp(x,4,96);y=clamp(y,10,88);draw();setTimeout(()=>{tiltX*=.55;tiltY*=.55;draw()},120);
+    if(e.key==="ArrowDown"){setMotor(.42);alt=clamp(alt-.5,0,30);y+=.25}
+    if(e.key==="ArrowLeft"){rot-=7;setMotor(.62,.08)}if(e.key==="ArrowRight"){rot+=7;setMotor(.62,.08)}
+    x=clamp(x,4,96);y=clamp(y,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
   }
   addEventListener("keydown",key,{passive:false});
 
   function tick(){
     timerEl.textContent=nowTime();if(paused)return;
-    if(flying){battery=Math.max(0,battery-.018);if(battery<15&&Math.random()<.08)warn("LOW BATTERY")}
+    if(flying){battery=Math.max(0,battery-.018);if(Date.now()-lastMove>320)setMotor(.50);if(battery<15&&Math.random()<.08)warn("LOW BATTERY")}
     if(mode==="hover"&&flying){
       const d=dist(x,y,50,54);
       if(stage===2&&d<8&&Math.abs(alt-6)<2){addScore(400,"ZONE ENTERED");setMission(3);hold=0}

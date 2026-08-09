@@ -107,3 +107,105 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 @media(max-width:1200px){.level-map{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media(max-width:760px){.level-map{grid-template-columns:repeat(2,minmax(0,1fr))!important}.level-map-head{align-items:flex-start!important;flex-direction:column!important}}
 @media(max-width:500px){.level-map{grid-template-columns:1fr!important}}
+
+/* ===== v5.0 FLIGHT VISUAL UPGRADE ===== */
+.flight-area{
+  background:
+    radial-gradient(circle at 70% 20%,rgba(255,181,84,.08),transparent 28%),
+    linear-gradient(#0b2e4e,#0a1a28 63%,#050d14)!important;
+}
+.speed-lines{
+  position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:
+    linear-gradient(90deg,transparent 0 49%,rgba(84,217,255,.0) 50%,transparent 51%),
+    repeating-linear-gradient(90deg,transparent 0 8%,rgba(98,220,255,.12) 8.3%,transparent 8.6% 16%);
+  transform:skewY(-10deg) scaleX(1.4);
+  filter:blur(.5px);
+  transition:opacity .2s;
+  mix-blend-mode:screen;
+}
+.speed-lines.active{opacity:.55;animation:speedShift .22s linear infinite}
+.engine-indicator{
+  position:absolute;right:20px;top:20px;z-index:7;
+  padding:9px 12px;border:1px solid rgba(85,230,255,.45);border-radius:8px;
+  background:rgba(2,15,25,.72);backdrop-filter:blur(6px);
+  display:grid;gap:2px;min-width:94px;text-align:right;
+}
+.engine-indicator span{font-size:8px;letter-spacing:.15em;color:#8cb8c9}
+.engine-indicator b{font-size:13px;color:#70e7ff;text-shadow:0 0 12px #25d9ff88}
+.real-drone{
+  width:220px!important;height:150px!important;
+  transform-style:preserve-3d!important;
+  transition:filter .12s!important;
+  will-change:transform,left,top;
+}
+.real-drone .arm{
+  height:12px!important;
+  background:linear-gradient(180deg,#6d7f88,#2c3a41 42%,#11181c 100%)!important;
+  box-shadow:inset 0 1px #b1c0c8,inset 0 -2px #06090b,0 3px 6px #0008!important;
+}
+.real-drone .motor{
+  width:24px!important;height:24px!important;
+  background:radial-gradient(circle at 45% 35%,#b7c2c7 0 10%,#52636b 11% 28%,#1d272c 29% 72%,#050708 73%)!important;
+  border:1px solid #64757c!important;
+  box-shadow:0 0 10px #4fe8ff55,inset 0 0 8px #000!important;
+}
+.real-drone .prop{
+  width:76px!important;height:18px!important;border:0!important;
+  border-radius:50%!important;opacity:.82!important;
+  background:radial-gradient(ellipse at center,rgba(70,229,255,.0) 0 28%,rgba(75,232,255,.42) 30%,rgba(75,232,255,.1) 48%,transparent 56%)!important;
+  box-shadow:0 0 16px #39dfff66!important;
+  animation:spin .045s linear infinite!important;
+}
+.real-drone .prop i{
+  position:absolute;left:50%;top:50%;width:72px;height:4px;transform:translate(-50%,-50%);
+  border-radius:6px;background:linear-gradient(90deg,transparent,#c8f7ff 25%,#62e9ff 50%,#c8f7ff 75%,transparent);
+  filter:blur(.2px);opacity:.75;
+}
+.real-drone.fast .prop{animation-duration:.026s!important;filter:blur(1.1px)!important;opacity:.5!important}
+.real-drone .shell-top{
+  left:67px!important;top:40px!important;width:86px!important;height:50px!important;
+  background:
+    linear-gradient(145deg,#9caab0 0%,#4b5a60 18%,#1f2a30 55%,#0f1519 100%)!important;
+  box-shadow:inset 0 2px #d5e0e4,inset -8px -8px 15px #0008,0 0 20px #17d8ff22!important;
+  clip-path:polygon(18% 0,82% 0,100% 45%,82% 100%,18% 100%,0 45%)!important;
+}
+.shell-highlight{
+  position:absolute;left:78px;top:47px;width:58px;height:13px;border-radius:50%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.42),transparent);
+  transform:rotate(-8deg);filter:blur(.4px);
+}
+.real-drone .shell-mid{
+  left:84px!important;top:78px!important;width:52px!important;height:28px!important;
+  background:linear-gradient(#1f2a2f,#080c0e)!important;border-radius:5px 5px 12px 12px!important;
+  box-shadow:inset 0 1px #4d5f66!important;
+}
+.camera-gimbal{
+  left:94px!important;top:99px!important;width:34px!important;height:31px!important;
+  background:linear-gradient(#586a72,#101518)!important;border:2px solid #82939b!important;
+  box-shadow:0 4px 7px #0009!important;
+}
+.lens{width:18px!important;height:18px!important}
+.landing-leg{
+  position:absolute;top:103px;width:8px;height:28px;background:linear-gradient(#39474e,#11181b);border-radius:4px;
+  transform-origin:top;box-shadow:0 2px 4px #0008;
+}
+.leg1{left:79px;transform:rotate(12deg)}.leg2{right:79px;transform:rotate(-12deg)}
+.nav-light{
+  position:absolute;width:6px;height:6px;border-radius:50%;background:#7beaff;
+  box-shadow:0 0 8px #7beaff,0 0 16px #38cfff;
+  animation:navBlink 1.2s ease-in-out infinite;
+}
+.nl1{left:47px;top:55px}.nl2{right:47px;top:55px;animation-delay:.6s}
+.real-drone.idle-wobble{animation:idleWobble 2.4s ease-in-out infinite}
+.real-drone.climbing{animation:climbShake .16s linear infinite}
+.real-drone.landing{animation:landingSettle .28s ease-in-out infinite}
+.flight-area.speeding .ground-grid{animation:gridRush .24s linear infinite}
+.flight-area.speeding .mountains{filter:blur(.6px) brightness(.95)}
+.flight-area.speeding .horizon{box-shadow:0 0 40px #4ae5ff88}
+@keyframes speedShift{to{transform:skewY(-10deg) translateX(-80px) scaleX(1.4)}}
+@keyframes idleWobble{0%,100%{translate:0 0}25%{translate:0 -1.5px}50%{translate:1px .5px}75%{translate:-1px -1px}}
+@keyframes climbShake{0%{translate:-1px -1px}50%{translate:1px 1px}100%{translate:-1px 0}}
+@keyframes landingSettle{0%,100%{translate:0 0}50%{translate:0 1.5px}}
+@keyframes gridRush{to{background-position:0 40px,60px 0}}
+@keyframes navBlink{50%{opacity:.22;transform:scale(.75)}}

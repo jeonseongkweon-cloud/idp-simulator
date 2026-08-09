@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020711">
-  <title>IDP Drone Simulator v4.1</title>
+  <title>IDP Drone Simulator v5.0</title>
   <link rel="icon" href="assets/img/idp-logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -14,7 +14,7 @@
     <div class="boot-card">
       <img src="assets/img/idp-logo.png" class="boot-logo" alt="IDP">
       <p class="micro">INTERNATIONAL DRONE PATROL</p>
-      <h1>IDP DRONE SIMULATOR <span class="vtag">v4.1</span></h1>
+      <h1>IDP DRONE SIMULATOR <span class="vtag">v5.0</span></h1>
       <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
       <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
       <small>v2.0 · Realistic Flight / Wildfire Mission / Scoring</small>
@@ -24,7 +24,7 @@
   <header class="topbar">
     <a class="brand" href="#home">
       <img src="assets/img/idp-logo.png" alt="">
-      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v4.1</small></span>
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v5.0</small></span>
     </a>
     <nav>
       <a href="#training">TRAINING</a>
@@ -203,6 +203,8 @@
     </div>
 
     <div id="flightArea" class="flight-area">
+      <div id="speedLines" class="speed-lines"></div>
+      <div class="engine-indicator"><span>MOTOR</span><b id="rpmText">IDLE</b></div>
       <div class="sky-glow"></div>
       <div class="mountains"></div>
       <div class="ground-grid"></div>
@@ -235,10 +237,12 @@
         <div class="arm arm1"></div><div class="arm arm2"></div>
         <div class="arm arm3"></div><div class="arm arm4"></div>
         <div class="motor m1"></div><div class="motor m2"></div><div class="motor m3"></div><div class="motor m4"></div>
-        <div class="prop p1"></div><div class="prop p2"></div><div class="prop p3"></div><div class="prop p4"></div>
-        <div class="shell-top"></div><div class="shell-mid"></div>
+        <div class="prop p1"><i></i></div><div class="prop p2"><i></i></div><div class="prop p3"><i></i></div><div class="prop p4"><i></i></div>
+        <div class="shell-top"></div><div class="shell-highlight"></div><div class="shell-mid"></div>
+        <div class="landing-leg leg1"></div><div class="landing-leg leg2"></div>
         <div class="camera-gimbal"><div class="lens"></div></div>
         <div class="led led-red"></div><div class="led led-green"></div>
+        <div class="nav-light nl1"></div><div class="nav-light nl2"></div>
       </div>
 
       <div id="missionFlash" class="mission-flash">MISSION COMPLETE</div>
