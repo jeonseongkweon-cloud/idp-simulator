@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDP Virtual Simulator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      height: 100vh;
+      background:
+        radial-gradient(circle at center, #12394a 0%, #06151d 45%, #020608 100%);
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .screen {
+      width: 92%;
+      max-width: 1100px;
+      text-align: center;
+      padding: 60px 30px;
+      border: 1px solid rgba(72, 220, 255, 0.35);
+      background: rgba(0, 15, 22, 0.72);
+      box-shadow:
+        0 0 40px rgba(0, 190, 255, 0.18),
+        inset 0 0 50px rgba(0, 190, 255, 0.05);
+    }
+
+    .system {
+      color: #62e5ff;
+      letter-spacing: 5px;
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
+
+    h1 {
+      font-size: clamp(42px, 7vw, 82px);
+      letter-spacing: 8px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      color: #62e5ff;
+      font-size: clamp(18px, 3vw, 30px);
+      letter-spacing: 5px;
+      margin-bottom: 35px;
+    }
+
+    .line {
+      width: 160px;
+      height: 2px;
+      background: #62e5ff;
+      margin: 0 auto 35px;
+      box-shadow: 0 0 15px #62e5ff;
+    }
+
+    .kr {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .description {
+      color: #9fb9c3;
+      font-size: 15px;
+      letter-spacing: 2px;
+      margin-bottom: 45px;
+    }
+
+    button {
+      padding: 17px 50px;
+      border: 1px solid #62e5ff;
+      background: rgba(0, 180, 230, 0.1);
+      color: #ffffff;
+      font-size: 16px;
+      letter-spacing: 4px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #62e5ff;
+      color: #001018;
+      box-shadow: 0 0 30px #62e5ff;
+    }
+
+    .footer {
+      margin-top: 45px;
+      color: #55727d;
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="screen">
+
+    <div class="system">
+      IDP TRAINING SYSTEM // ONLINE
+    </div>
+
+    <h1>IDP</h1>
+
+    <h2>VIRTUAL DRONE SIMULATOR</h2>
+
+    <div class="line"></div>
+
+    <div class="kr">
+      국제드론순찰대 가상훈련 시스템
+    </div>
+
+    <div class="description">
+      INTERNATIONAL DRONE PATROL · VIRTUAL TRAINING PLATFORM
+    </div>
+
+    <button onclick="alert('IDP SIMULATOR SYSTEM READY')">
+      START TRAINING
+    </button>
+
+    <div class="footer">
+      INTERNATIONAL DRONE PATROL · IDP VIRTUAL TRAINING SYSTEM
+    </div>
+
+  </div>
+
+</body>
+</html>
