@@ -44,8 +44,8 @@
     const scale=1+alt*.008;
     const activeMove=(Date.now()-lastMove<240)&&flying;
     const depth=depthPos; // + = forward, - = backward
-    y=clamp(65-depthPos*0.22,10,88); // mission-coordinate only; NOT screen altitude
-    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depthPos*3);
+    y=clamp(65-depthPos*0.012,10,88); // mission-coordinate only; NOT screen altitude
+    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depthPos);
     const screenY=65 - alt*0.34; // ONLY ↑/↓ changes vertical screen position
     drone.style.left=x+"%";drone.style.top=clamp(screenY,25,78)+"%";
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${scale})`;
@@ -71,7 +71,7 @@
     }
     if(groundGrid){
       const depth=depthPos;
-      groundGrid.style.backgroundPosition=`0 ${depth*7}px, ${depth*4}px 0`;
+      groundGrid.style.backgroundPosition=`0 ${depth*2.4}px, ${depth*1.2}px 0`;
     }
     if(landingPad){
       const depth=depthPos;
@@ -91,7 +91,7 @@
     view.classList.remove("night-mode","search-mode");flightArea.classList.remove("outdoor-moving");disasterMarker.classList.remove("show");patrolPoints.forEach(p=>p.classList.remove("show"));masterCore.classList.remove("show");
   }
   function resetCommon(){
-    x=50;y=65;depthPos=0;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();drone.classList.remove("climbing","landing");motorOff();draw();
+    x=50;y=65;depthPos=0;held.w=false;held.s=false;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();drone.classList.remove("climbing","landing");motorOff();draw();
   }
 
   const missionSets={
@@ -198,7 +198,7 @@
   function toggleFlight(){
     if(!flying){initMotorAudio();setMotor(.55,.15);window.IDPTone?.(180,.12,"sawtooth");setTimeout(()=>window.IDPTone?.(260,.18,"sine"),120);flying=true;alt=Math.max(1,alt);drone.classList.add("climbing");setTimeout(()=>drone.classList.remove("climbing"),700);addScore(200,"TAKE OFF");setMission(1)}
     else{
-      const nearPad=Math.abs(x-50)<10&&Math.abs(depthPos)<22;
+      const nearPad=Math.abs(x-50)<10&&Math.abs(depthPos)<45;
       if(alt<=1.4&&nearPad){
         drone.classList.add("landing");setMotor(.25);window.IDPTone?.(120,.16,"sine");setTimeout(()=>{motorOff();drone.classList.remove("landing")},500);flying=false;alt=0;const err=Math.hypot(x-50,(y-82)*.7),bonus=Math.round(clamp(800-err*45,350,800));addScore(bonus,"LANDING");
         const last=missionSets[mode].length-1;if(stage===last||mode==="basic")finish(bonus)
@@ -213,8 +213,7 @@
     if(e.code==="Space"){if(!paused)toggleFlight();return}
     if(paused||!flying)return;
     const step=1.15;lastMove=Date.now();moveVX=moveVY=0;
-    if(k==="w"){depthPos=clamp(depthPos+step,-120,220);moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
-    if(k==="s"){depthPos=clamp(depthPos-step,-120,220);moveVY=1;tiltY=18;setMotor(.67,.10)}
+    if(k==="w"||k==="s"){held[k]=true;return}
     if(k==="a"){x-=step;moveVX=-1;tiltX=-17;setMotor(.69,.12)}
     if(k==="d"){x+=step;moveVX=1;tiltX=17;setMotor(.69,.12)}
     if(e.key==="ArrowUp"){drone.classList.add("climbing");setMotor(.82,.2);setTimeout(()=>drone.classList.remove("climbing"),220);
@@ -230,9 +229,34 @@
     }
     if(e.key==="ArrowDown"){setMotor(.42);alt=clamp(alt-.5,0,30)}
     if(e.key==="ArrowLeft"){rot-=7;setMotor(.62,.08)}if(e.key==="ArrowRight"){rot+=7;setMotor(.62,.08)}
-    x=clamp(x,4,96);y=clamp(65-depthPos*0.22,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
+    x=clamp(x,4,96);y=clamp(65-depthPos*0.012,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
   }
   addEventListener("keydown",key,{passive:false});
+  addEventListener("keyup",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="w"||k==="s"){held[k]=false;moveVY=0;tiltY*=.35;if(flying)setMotor(.52);draw()}
+  });
+  addEventListener("blur",()=>{held.w=false;held.s=false;moveVY=0});
+
+  // Continuous depth flight: W/S moves as long as the key is physically held.
+  setInterval(()=>{
+    if(!view.classList.contains("open")||paused||!flying)return;
+    let moved=false;
+    const travelStep=3.2; // ~100 depth units/sec
+    if(held.w){
+      depthPos=clamp(depthPos+travelStep,-1800,1800);
+      moveVY=-1;tiltY=-18;setMotor(.74,.18);lastMove=Date.now();moved=true;
+      if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}
+    }
+    if(held.s){
+      depthPos=clamp(depthPos-travelStep,-1800,1800);
+      moveVY=1;tiltY=18;setMotor(.68,.10);lastMove=Date.now();moved=true;
+    }
+    if(moved){
+      y=clamp(65-depthPos*0.012,10,88); // mission coordinate changes slowly
+      draw();
+    }
+  },32);
 
   function tick(){
     timerEl.textContent=nowTime();if(paused)return;

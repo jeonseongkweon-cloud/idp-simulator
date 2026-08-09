@@ -372,3 +372,23 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 .outdoor-photo-layer,.depth-far,.depth-near,.landing-pad{
   will-change:transform;
 }
+
+/* ===== v5.8 CONTINUOUS FLIGHT FIX ===== */
+.boot-logo{
+  background:transparent!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+  clip-path:none!important;
+  filter:drop-shadow(0 0 28px rgba(231,173,58,.48))!important;
+}
+.outdoor-photo-layer{
+  background:
+    linear-gradient(180deg,rgba(3,16,24,.04),rgba(0,12,8,.10)),
+    url('../img/outdoor-training-clean-v58.jpg') center 52%/cover no-repeat!important;
+}
+.training-overlay,.safety-cone,.training-gate{display:none!important}
+.flight-area .landing-pad{
+  border:5px solid #ffd34d!important;
+  background:radial-gradient(ellipse at center,#39433d 0 56%,#202824 57% 100%)!important;
+  box-shadow:0 0 22px rgba(255,211,77,.62),0 10px 16px rgba(0,0,0,.24)!important;
+}
