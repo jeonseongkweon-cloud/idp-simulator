@@ -1,45 +1,67 @@
 {
-  "version": "5.1",
+  "version": "4.0",
+  "unlock_rule": "Complete previous level to unlock next level",
+  "storage": "localStorage:idp_unlocked_level",
   "levels": [
     {
       "level": 1,
-      "name": "기초 비행"
+      "mode": "basic",
+      "name": "기초 비행",
+      "tier": "BASIC"
     },
     {
       "level": 2,
-      "name": "호버링 시험"
+      "mode": "hover",
+      "name": "호버링 시험",
+      "tier": "BASIC"
     },
     {
       "level": 3,
-      "name": "장애물 링 통과"
+      "mode": "rings",
+      "name": "장애물 링 통과",
+      "tier": "BASIC"
     },
     {
       "level": 4,
-      "name": "실종자 수색"
+      "mode": "search",
+      "name": "실종자 수색",
+      "tier": "OPERATOR"
     },
     {
       "level": 5,
-      "name": "산불 좌표 보고"
+      "mode": "wildfire",
+      "name": "산불 좌표 보고",
+      "tier": "OPERATOR"
     },
     {
       "level": 6,
-      "name": "야간 비행"
+      "mode": "night",
+      "name": "야간 비행",
+      "tier": "OPERATOR"
     },
     {
       "level": 7,
-      "name": "재난지역 정찰"
+      "mode": "disaster",
+      "name": "재난지역 정찰",
+      "tier": "PATROL"
     },
     {
       "level": 8,
-      "name": "안전 순찰 임무"
+      "mode": "patrol",
+      "name": "안전 순찰 임무",
+      "tier": "PATROL"
     },
     {
       "level": 9,
-      "name": "종합 구조·순찰"
+      "mode": "rescue",
+      "name": "종합 구조·순찰",
+      "tier": "PATROL"
     },
     {
       "level": 10,
-      "name": "IDP MASTER CHALLENGE"
+      "mode": "master",
+      "name": "IDP MASTER CHALLENGE",
+      "tier": "MASTER"
     }
   ]
 }

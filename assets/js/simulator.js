@@ -1,7 +1,7 @@
 
 (() => {
   const $=s=>document.querySelector(s);
-  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery");
+  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),farMountains=$("#farMountains"),nearHills=$("#nearHills"),runway=$("#runway");
   const title=$("#missionTitle"),text=$("#missionText"),missionNo=$("#missionNo"),flash=$("#missionFlash"),warning=$("#warning");
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
@@ -49,6 +49,19 @@
     drone.classList.toggle("idle-wobble",flying&&!activeMove);
     flightArea.classList.toggle("speeding",activeMove&&Math.hypot(moveVX,moveVY)>0);
     speedLines.classList.toggle("active",activeMove&&Math.hypot(moveVX,moveVY)>0);
+    flightArea.classList.toggle("outdoor-speed",activeMove&&Math.hypot(moveVX,moveVY)>0);
+    if(farMountains){
+      const px=(50-x)*0.10, py=(65-y)*0.035;
+      farMountains.style.transform=`translate(${px}px,${py}px) scale(${1+alt*0.0008})`;
+    }
+    if(nearHills){
+      const px2=(50-x)*0.18;
+      nearHills.style.transform=`translateX(${px2}px) scale(${1+alt*0.0012})`;
+    }
+    if(runway){
+      const rx=(50-x)*0.06;
+      runway.style.transform=`translateX(${rx}px) scaleX(${1+Math.abs(moveVX)*0.02})`;
+    }
     const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.35-alt*.028,.28,1.35)})`;shadow.style.opacity=clamp(.82-alt*.025,.12,.82);shadow.style.filter=`blur(${clamp(5+alt*.38,5,18)}px)`;
     altEl.textContent=alt.toFixed(1);spdEl.textContent=((Date.now()-lastMove<220&&flying)?Math.min(8,Math.hypot(moveVX,moveVY)*2.3+2.2):0).toFixed(1);
     hdgEl.textContent=String((Math.round(rot)%360+360)%360).padStart(3,"0");scoreEl.textContent=String(Math.max(0,Math.round(score))).padStart(4,"0");batteryEl.textContent=Math.max(0,Math.round(battery));
@@ -59,7 +72,7 @@
   function resetEnv(){
     wildfire.classList.remove("show");target.classList.remove("show");hoverZone.classList.remove("show");
     rings.forEach(r=>{r.classList.remove("show","passed")});missingPerson.classList.remove("show");coordBox.classList.remove("show");nightBeacon.classList.remove("show");
-    view.classList.remove("night-mode","search-mode");disasterMarker.classList.remove("show");patrolPoints.forEach(p=>p.classList.remove("show"));masterCore.classList.remove("show");
+    view.classList.remove("night-mode","search-mode");flightArea.classList.remove("basic-outdoor","hover-outdoor","outdoor-speed");disasterMarker.classList.remove("show");patrolPoints.forEach(p=>p.classList.remove("show"));masterCore.classList.remove("show");
   }
   function resetCommon(){
     x=50;y=65;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();drone.classList.remove("climbing","landing");motorOff();draw();
@@ -154,7 +167,9 @@
       master:["IDP / LEVEL 10","MASTER CHALLENGE"]
     };
     $("#modeTitle").textContent=labels[mode][0];$("#modeSubtitle").textContent=labels[mode][1];
-    if(mode==="hover")hoverZone.classList.add("show");
+    flightArea.classList.remove("basic-outdoor","hover-outdoor");
+    if(mode==="basic")flightArea.classList.add("basic-outdoor");
+    if(mode==="hover"){flightArea.classList.add("hover-outdoor");hoverZone.classList.add("show")}
     if(mode==="rings")rings.forEach(r=>r.classList.add("show"));
     if(mode==="search"){view.classList.add("search-mode");missingPerson.classList.add("show")}
     if(mode==="wildfire"){wildfire.classList.add("show");target.classList.add("show")}
