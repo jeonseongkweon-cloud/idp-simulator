@@ -1,1 +1,1 @@
-window.IDP_CONFIG={version:"5.3",googleSheetEndpoint:"",demoIds:["IDP2026","IDP-KR-000001"]};
+window.IDP_CONFIG={version:"5.4",googleSheetEndpoint:"",demoIds:["IDP2026","IDP-KR-000001"]};

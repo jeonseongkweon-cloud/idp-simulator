@@ -1,7 +1,7 @@
 
 (() => {
   const $=s=>document.querySelector(s);
-  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),outdoorPhoto=$("#outdoorPhoto"),depthFar=$("#depthFar"),depthNear=$("#depthNear");
+  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),outdoorPhoto=$("#outdoorPhoto"),depthFar=$("#depthFar"),depthNear=$("#depthNear"),trainingOverlay=document.querySelector(".training-overlay"),groundGrid=document.querySelector(".ground-grid");
   const title=$("#missionTitle"),text=$("#missionText"),missionNo=$("#missionNo"),flash=$("#missionFlash"),warning=$("#warning");
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
@@ -43,7 +43,9 @@
   function draw(){
     const scale=1+alt*.008;
     const activeMove=(Date.now()-lastMove<240)&&flying;
-    drone.style.left=x+"%";drone.style.top=y+"%";
+    const depth=65-y; // + = forward, - = backward
+    const screenY=65 - alt*0.34 - depth*0.075;
+    drone.style.left=x+"%";drone.style.top=clamp(screenY,25,78)+"%";
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${scale})`;
     drone.classList.toggle("flying",flying);drone.classList.toggle("fast",activeMove);
     drone.classList.toggle("idle-wobble",flying&&!activeMove);
@@ -51,13 +53,29 @@
     speedLines.classList.toggle("active",activeMove&&Math.hypot(moveVX,moveVY)>0);
     flightArea.classList.toggle("outdoor-moving",activeMove&&Math.hypot(moveVX,moveVY)>0);
     if(outdoorPhoto){
-      const bgX=(50-x)*0.10;
-      const bgY=(65-y)*0.035;
-      const bgScale=1.05+alt*0.0011;
-      outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${bgScale})`;
+      const depth=65-y;
+      const bgX=(50-x)*0.12;
+      const bgY=depth*0.11;
+      const bgScale=1.05 + alt*0.0007 + depth*0.0042;
+      outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${clamp(bgScale,.96,1.22)})`;
     }
-    if(depthFar) depthFar.style.transform=`translateX(${(50-x)*0.035}px)`;
-    if(depthNear) depthNear.style.transform=`translateX(${(50-x)*0.12}px)`;
+    if(depthFar){
+      const depth=65-y;
+      depthFar.style.transform=`translate(${(50-x)*0.035}px,${depth*0.035}px) scale(${1+depth*0.0007})`;
+    }
+    if(depthNear){
+      const depth=65-y;
+      depthNear.style.transform=`translate(${(50-x)*0.15}px,${depth*0.085}px) scale(${1+depth*0.002})`;
+    }
+    if(trainingOverlay){
+      const depth=65-y;
+      trainingOverlay.style.transform=`translateY(${depth*0.18}px) scale(${clamp(1+depth*0.003,.92,1.13)})`;
+      trainingOverlay.style.transformOrigin="50% 65%";
+    }
+    if(groundGrid){
+      const depth=65-y;
+      groundGrid.style.backgroundPosition=`0 ${depth*5}px, ${depth*3}px 0`;
+    }
     const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.35-alt*.028,.28,1.35)})`;shadow.style.opacity=clamp(.82-alt*.025,.12,.82);shadow.style.filter=`blur(${clamp(5+alt*.38,5,18)}px)`;
     altEl.textContent=alt.toFixed(1);spdEl.textContent=((Date.now()-lastMove<220&&flying)?Math.min(8,Math.hypot(moveVX,moveVY)*2.3+2.2):0).toFixed(1);
     hdgEl.textContent=String((Math.round(rot)%360+360)%360).padStart(3,"0");scoreEl.textContent=String(Math.max(0,Math.round(score))).padStart(4,"0");batteryEl.textContent=Math.max(0,Math.round(battery));
@@ -178,7 +196,7 @@
   function toggleFlight(){
     if(!flying){initMotorAudio();setMotor(.55,.15);window.IDPTone?.(180,.12,"sawtooth");setTimeout(()=>window.IDPTone?.(260,.18,"sine"),120);flying=true;alt=Math.max(1,alt);drone.classList.add("climbing");setTimeout(()=>drone.classList.remove("climbing"),700);addScore(200,"TAKE OFF");setMission(1)}
     else{
-      const nearPad=Math.abs(x-50)<8&&y>74;
+      const nearPad=Math.abs(x-50)<10&&y>72;
       if(alt<=1.4&&nearPad){
         drone.classList.add("landing");setMotor(.25);window.IDPTone?.(120,.16,"sine");setTimeout(()=>{motorOff();drone.classList.remove("landing")},500);flying=false;alt=0;const err=Math.hypot(x-50,(y-82)*.7),bonus=Math.round(clamp(800-err*45,350,800));addScore(bonus,"LANDING");
         const last=missionSets[mode].length-1;if(stage===last||mode==="basic")finish(bonus)
@@ -192,13 +210,13 @@
     if(k==="p"){paused=!paused;$("#pauseBtn").textContent=paused?"RESUME":"PAUSE";return}
     if(e.code==="Space"){if(!paused)toggleFlight();return}
     if(paused||!flying)return;
-    const step=1.8;lastMove=Date.now();moveVX=moveVY=0;
+    const step=1.15;lastMove=Date.now();moveVX=moveVY=0;
     if(k==="w"){y-=step;moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
     if(k==="s"){y+=step;moveVY=1;tiltY=18;setMotor(.67,.10)}
     if(k==="a"){x-=step;moveVX=-1;tiltX=-17;setMotor(.69,.12)}
     if(k==="d"){x+=step;moveVX=1;tiltX=17;setMotor(.69,.12)}
     if(e.key==="ArrowUp"){drone.classList.add("climbing");setMotor(.82,.2);setTimeout(()=>drone.classList.remove("climbing"),220);
-      alt=clamp(alt+.5,0,30);y-=.25;
+      alt=clamp(alt+.5,0,30);
       if(mode==="basic"&&stage===1&&alt>=5){addScore(250,"ALTITUDE");setMission(2)}
       if(mode==="hover"&&stage===1&&alt>=6){addScore(300,"ALTITUDE");setMission(2)}
       if(mode==="search"&&stage===1&&alt>=8){addScore(300,"ALTITUDE");setMission(2)}
@@ -208,7 +226,7 @@
       if(mode==="disaster"&&stage===1&&alt>=8){addScore(300,"ALTITUDE");setMission(2)}
       if(mode==="master"&&stage===1&&alt>=10){addScore(400,"ALTITUDE");setMission(2)}
     }
-    if(e.key==="ArrowDown"){setMotor(.42);alt=clamp(alt-.5,0,30);y+=.25}
+    if(e.key==="ArrowDown"){setMotor(.42);alt=clamp(alt-.5,0,30)}
     if(e.key==="ArrowLeft"){rot-=7;setMotor(.62,.08)}if(e.key==="ArrowRight"){rot+=7;setMotor(.62,.08)}
     x=clamp(x,4,96);y=clamp(y,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
   }

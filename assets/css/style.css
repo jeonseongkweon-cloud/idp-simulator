@@ -272,3 +272,7 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 .simulator-view.night-mode .outdoor-photo-layer{filter:brightness(.26) saturate(.65) hue-rotate(7deg)}
 .simulator-view.night-mode .depth-near{background:linear-gradient(180deg,rgba(1,5,15,.2),rgba(1,5,15,.54))}
 .simulator-view.search-mode .outdoor-photo-layer{filter:brightness(.7) saturate(1.12)}
+
+/* v5.4 control semantics: W/S = forward/back depth, arrows = altitude only */
+.flight-area.outdoor-moving .outdoor-photo-layer{transition:filter .08s}
+.training-overlay{transition:transform .08s linear}
