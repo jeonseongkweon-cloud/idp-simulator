@@ -276,3 +276,7 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 /* v5.4 control semantics: W/S = forward/back depth, arrows = altitude only */
 .flight-area.outdoor-moving .outdoor-photo-layer{transition:filter .08s}
 .training-overlay{transition:transform .08s linear}
+
+/* v5.5 CONTROL FIX
+   W/S changes scene depth only; arrow keys change altitude only. */
+.flight-area .landing-pad{transition:transform .08s linear}

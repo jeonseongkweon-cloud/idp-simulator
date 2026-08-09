@@ -1,7 +1,7 @@
 
 (() => {
   const $=s=>document.querySelector(s);
-  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),outdoorPhoto=$("#outdoorPhoto"),depthFar=$("#depthFar"),depthNear=$("#depthNear"),trainingOverlay=document.querySelector(".training-overlay"),groundGrid=document.querySelector(".ground-grid");
+  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),outdoorPhoto=$("#outdoorPhoto"),depthFar=$("#depthFar"),depthNear=$("#depthNear"),trainingOverlay=document.querySelector(".training-overlay"),groundGrid=document.querySelector(".ground-grid"),landingPad=document.querySelector(".landing-pad");
   const title=$("#missionTitle"),text=$("#missionText"),missionNo=$("#missionNo"),flash=$("#missionFlash"),warning=$("#warning");
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
@@ -44,7 +44,8 @@
     const scale=1+alt*.008;
     const activeMove=(Date.now()-lastMove<240)&&flying;
     const depth=65-y; // + = forward, - = backward
-    const screenY=65 - alt*0.34 - depth*0.075;
+    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depth*2);
+    const screenY=65 - alt*0.34; // altitude ONLY controls vertical screen position
     drone.style.left=x+"%";drone.style.top=clamp(screenY,25,78)+"%";
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${scale})`;
     drone.classList.toggle("flying",flying);drone.classList.toggle("fast",activeMove);
@@ -55,9 +56,9 @@
     if(outdoorPhoto){
       const depth=65-y;
       const bgX=(50-x)*0.12;
-      const bgY=depth*0.11;
-      const bgScale=1.05 + alt*0.0007 + depth*0.0042;
-      outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${clamp(bgScale,.96,1.22)})`;
+      const bgY=depth*0.04;
+      const bgScale=1.05 + alt*0.0005 + depth*0.009;
+      outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${clamp(bgScale,.88,1.38)})`;
     }
     if(depthFar){
       const depth=65-y;
@@ -69,12 +70,17 @@
     }
     if(trainingOverlay){
       const depth=65-y;
-      trainingOverlay.style.transform=`translateY(${depth*0.18}px) scale(${clamp(1+depth*0.003,.92,1.13)})`;
+      trainingOverlay.style.transform=`translateY(${depth*0.04}px) scale(${clamp(1+depth*0.010,.78,1.34)})`;
       trainingOverlay.style.transformOrigin="50% 65%";
     }
     if(groundGrid){
       const depth=65-y;
-      groundGrid.style.backgroundPosition=`0 ${depth*5}px, ${depth*3}px 0`;
+      groundGrid.style.backgroundPosition=`0 ${depth*7}px, ${depth*4}px 0`;
+    }
+    if(landingPad){
+      const depth=65-y;
+      const padScale=clamp(1+depth*0.012,.68,1.45);
+      landingPad.style.transform=`translate(-50%,-50%) rotateX(55deg) scale(${padScale})`;
     }
     const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.35-alt*.028,.28,1.35)})`;shadow.style.opacity=clamp(.82-alt*.025,.12,.82);shadow.style.filter=`blur(${clamp(5+alt*.38,5,18)}px)`;
     altEl.textContent=alt.toFixed(1);spdEl.textContent=((Date.now()-lastMove<220&&flying)?Math.min(8,Math.hypot(moveVX,moveVY)*2.3+2.2):0).toFixed(1);
