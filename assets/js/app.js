@@ -13,7 +13,17 @@
   function openModal(id){$(id).classList.add("open");tone(360,.1)}
   function closeModals(){$$(".modal").forEach(m=>m.classList.remove("open"))}
   $$("[data-close]").forEach(b=>b.onclick=closeModals); $$(".modal").forEach(m=>m.onclick=e=>{if(e.target===m)closeModals()});
-  $$("[data-open]").forEach(el=>el.onclick=e=>{const t=e.currentTarget.dataset.open;if(t==="login")openModal("#loginModal");if(t==="guide")openModal("#guideModal");if(t==="simulator")window.IDPSim.open("basic");if(t==="wildfire")window.IDPSim.open("wildfire")});
+  $$("[data-open]").forEach(el=>el.onclick=e=>{
+    const t=e.currentTarget.dataset.open;
+    if(t==="login")openModal("#loginModal");
+    if(t==="guide")openModal("#guideModal");
+    if(t==="simulator")window.IDPSim.open("basic");
+    if(t==="hover")window.IDPSim.open("hover");
+    if(t==="rings")window.IDPSim.open("rings");
+    if(t==="search")window.IDPSim.open("search");
+    if(t==="wildfire")window.IDPSim.open("wildfire");
+    if(t==="night")window.IDPSim.open("night");
+  });
   $("#verifyId").onclick=()=>{const id=$("#memberId").value.trim().toUpperCase(),out=$("#loginResult");if(["IDP2026","IDP-KR-000001"].includes(id)){out.innerHTML=`✅ 인증 성공: <b>${id}</b>`;tone(720,.2)}else{out.innerHTML=`❌ 데모 ID <b>IDP2026</b>을 입력해 보세요.`;tone(130,.2,"square")}};
   window.IDPTone=tone;
 })();

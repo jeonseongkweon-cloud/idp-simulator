@@ -50,8 +50,9 @@
         <p class="hero-copy">기초 비행 · 산불 감시 · 순찰 · 재난 대응 훈련</p>
         <div class="hero-actions">
           <button class="btn btn-blue" data-open="simulator">초급 체험 <small>LEVEL 1 · 누구나 이용 가능</small></button>
-          <button class="btn btn-gold" data-open="wildfire">산불 감시 미션 <small>초급 체험용 공개 미션</small></button>
-          <button class="btn btn-gold" data-open="login">ID 로그인 <small>LEVEL 2 이상</small></button>
+          <button class="btn btn-gold" data-open="hover">LEVEL 2 호버링 <small>정밀 정지비행 시험</small></button>
+          <button class="btn btn-gold" data-open="wildfire">산불 감시 <small>연기 탐지 · 좌표 보고</small></button>
+          <button class="btn btn-gold" data-open="login">ID 로그인 <small>회원 교육과정 확장용</small></button>
         </div>
         <div class="progress-strip">
           <span><b>01</b> 이륙</span><i>›</i><span><b>02</b> 5m 상승</span><i>›</i>
@@ -61,16 +62,36 @@
       </div>
     </section>
 
-    <section class="command-grid" id="training">
+    <section class="command-grid missions-grid" id="training">
       <article class="command-card blue">
         <span class="card-icon">✦</span><p>TRAINING</p><h4>LEVEL 1 기초 비행</h4>
-        <small>비행감·기울기·고도·정밀착륙</small>
+        <small>이륙 · 상승 · 전진 · 정밀착륙</small>
         <button data-open="simulator">훈련 시작 →</button>
       </article>
-      <article class="command-card orange" id="mission">
-        <span class="card-icon">🔥</span><p>MISSION</p><h4>산불 감시 미션</h4>
-        <small>연기 탐지 → 현장 접근 → 안전 보고</small>
+      <article class="command-card cyan">
+        <span class="card-icon">◎</span><p>LEVEL 2</p><h4>호버링 시험</h4>
+        <small>지정 구역에서 10초 정지비행</small>
+        <button data-open="hover">시험 시작 →</button>
+      </article>
+      <article class="command-card green">
+        <span class="card-icon">⭕</span><p>OBSTACLE</p><h4>장애물 링 통과</h4>
+        <small>3개의 링을 순서대로 통과</small>
+        <button data-open="rings">도전 시작 →</button>
+      </article>
+      <article class="command-card purple">
+        <span class="card-icon">🔎</span><p>SEARCH</p><h4>실종자 수색</h4>
+        <small>수색구역 탐색 · 대상 발견 · 복귀</small>
+        <button data-open="search">수색 시작 →</button>
+      </article>
+      <article class="command-card orange">
+        <span class="card-icon">🔥</span><p>WILDFIRE</p><h4>산불 좌표 보고</h4>
+        <small>연기 탐지 · 좌표 확인 · 안전 보고</small>
         <button data-open="wildfire">미션 시작 →</button>
+      </article>
+      <article class="command-card night">
+        <span class="card-icon">🌙</span><p>NIGHT OPS</p><h4>야간 비행</h4>
+        <small>저조도 환경 · 비콘 확인 · 안전 착륙</small>
+        <button data-open="night">야간 훈련 →</button>
       </article>
       <article class="command-card green" id="practice">
         <span class="card-icon">◇</span><p>PRACTICE</p><h4>자유 연습</h4>
@@ -79,7 +100,7 @@
       </article>
       <article class="command-card purple" id="ranking">
         <span class="card-icon">♛</span><p>SCORING</p><h4>점수 & 별점</h4>
-        <small>정확도·시간·착륙 품질 평가</small>
+        <small>정확도 · 시간 · 미션 수행 평가</small>
         <button data-open="guide">평가 방식 →</button>
       </article>
       <article class="command-card cyan" id="guide">
@@ -161,6 +182,14 @@
       </div>
 
       <div id="targetMarker" class="target-marker"><i></i><span>TARGET</span></div>
+
+      <div id="hoverZone" class="hover-zone"><span>HOVER ZONE</span></div>
+      <div id="ring1" class="flight-ring ring-one"><span>1</span></div>
+      <div id="ring2" class="flight-ring ring-two"><span>2</span></div>
+      <div id="ring3" class="flight-ring ring-three"><span>3</span></div>
+      <div id="missingPerson" class="missing-person"><div class="person-head"></div><div class="person-body"></div><span>MISSING PERSON</span></div>
+      <div id="coordBox" class="coord-box">LAT <b>35.5392</b><br>LON <b>129.3114</b></div>
+      <div id="nightBeacon" class="night-beacon"><i></i><span>SAFE BEACON</span></div>
 
       <div id="drone" class="real-drone">
         <div class="drone-shadow"></div>
