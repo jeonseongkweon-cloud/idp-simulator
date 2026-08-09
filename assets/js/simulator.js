@@ -1,7 +1,7 @@
 
 (() => {
   const $=s=>document.querySelector(s);
-  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),outdoorPhoto=$("#outdoorPhoto"),depthFar=$("#depthFar"),depthNear=$("#depthNear"),trainingOverlay=document.querySelector(".training-overlay"),groundGrid=document.querySelector(".ground-grid"),landingPad=document.querySelector(".landing-pad");
+  const view=$("#simulatorView"),drone=$("#drone"),flightArea=$("#flightArea"),speedLines=$("#speedLines"),rpmText=$("#rpmText"),altEl=$("#alt"),spdEl=$("#spd"),hdgEl=$("#hdg"),scoreEl=$("#score"),timerEl=$("#timer"),batteryEl=$("#battery"),outdoorPhoto=$("#outdoorPhoto"),depthFar=$("#depthFar"),depthNear=$("#depthNear"),groundGrid=document.querySelector(".ground-grid"),landingPad=document.querySelector(".landing-pad");
   const title=$("#missionTitle"),text=$("#missionText"),missionNo=$("#missionNo"),flash=$("#missionFlash"),warning=$("#warning");
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
@@ -44,8 +44,8 @@
     const scale=1+alt*.008;
     const activeMove=(Date.now()-lastMove<240)&&flying;
     const depth=depthPos; // + = forward, - = backward
-    y=clamp(65-depthPos,10,88); // mission-coordinate only; NOT screen altitude
-    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depthPos*2);
+    y=clamp(65-depthPos*0.22,10,88); // mission-coordinate only; NOT screen altitude
+    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depthPos*3);
     const screenY=65 - alt*0.34; // ONLY ↑/↓ changes vertical screen position
     drone.style.left=x+"%";drone.style.top=clamp(screenY,25,78)+"%";
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${scale})`;
@@ -58,8 +58,8 @@
       const depth=depthPos;
       const bgX=(50-x)*0.12;
       const bgY=depth*0.04;
-      const bgScale=1.05 + alt*0.0005 + depth*0.013;
-      outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${clamp(bgScale,.88,1.38)})`;
+      const bgScale=1.04 + alt*0.0004 + depth*0.0048;
+      outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${clamp(bgScale,.62,2.15)})`;
     }
     if(depthFar){
       const depth=depthPos;
@@ -69,18 +69,13 @@
       const depth=depthPos;
       depthNear.style.transform=`translate(${(50-x)*0.15}px,${depth*0.085}px) scale(${1+depth*0.002})`;
     }
-    if(trainingOverlay){
-      const depth=depthPos;
-      trainingOverlay.style.transform=`translateY(${depth*0.02}px) scale(${clamp(1+depth*0.015,.70,1.55)})`;
-      trainingOverlay.style.transformOrigin="50% 65%";
-    }
     if(groundGrid){
       const depth=depthPos;
       groundGrid.style.backgroundPosition=`0 ${depth*7}px, ${depth*4}px 0`;
     }
     if(landingPad){
       const depth=depthPos;
-      const padScale=clamp(1+depth*0.018,.58,1.65);
+      const padScale=clamp(1+depth*0.0065,.50,2.05);
       landingPad.style.transform=`translate(-50%,-50%) rotateX(55deg) scale(${padScale})`;
     }
     const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.35-alt*.028,.28,1.35)})`;shadow.style.opacity=clamp(.82-alt*.025,.12,.82);shadow.style.filter=`blur(${clamp(5+alt*.38,5,18)}px)`;
@@ -203,7 +198,7 @@
   function toggleFlight(){
     if(!flying){initMotorAudio();setMotor(.55,.15);window.IDPTone?.(180,.12,"sawtooth");setTimeout(()=>window.IDPTone?.(260,.18,"sine"),120);flying=true;alt=Math.max(1,alt);drone.classList.add("climbing");setTimeout(()=>drone.classList.remove("climbing"),700);addScore(200,"TAKE OFF");setMission(1)}
     else{
-      const nearPad=Math.abs(x-50)<10&&y>72;
+      const nearPad=Math.abs(x-50)<10&&Math.abs(depthPos)<22;
       if(alt<=1.4&&nearPad){
         drone.classList.add("landing");setMotor(.25);window.IDPTone?.(120,.16,"sine");setTimeout(()=>{motorOff();drone.classList.remove("landing")},500);flying=false;alt=0;const err=Math.hypot(x-50,(y-82)*.7),bonus=Math.round(clamp(800-err*45,350,800));addScore(bonus,"LANDING");
         const last=missionSets[mode].length-1;if(stage===last||mode==="basic")finish(bonus)
@@ -218,8 +213,8 @@
     if(e.code==="Space"){if(!paused)toggleFlight();return}
     if(paused||!flying)return;
     const step=1.15;lastMove=Date.now();moveVX=moveVY=0;
-    if(k==="w"){depthPos=clamp(depthPos+step,-23,55);moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
-    if(k==="s"){depthPos=clamp(depthPos-step,-23,55);moveVY=1;tiltY=18;setMotor(.67,.10)}
+    if(k==="w"){depthPos=clamp(depthPos+step,-120,220);moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
+    if(k==="s"){depthPos=clamp(depthPos-step,-120,220);moveVY=1;tiltY=18;setMotor(.67,.10)}
     if(k==="a"){x-=step;moveVX=-1;tiltX=-17;setMotor(.69,.12)}
     if(k==="d"){x+=step;moveVX=1;tiltX=17;setMotor(.69,.12)}
     if(e.key==="ArrowUp"){drone.classList.add("climbing");setMotor(.82,.2);setTimeout(()=>drone.classList.remove("climbing"),220);
@@ -235,7 +230,7 @@
     }
     if(e.key==="ArrowDown"){setMotor(.42);alt=clamp(alt-.5,0,30)}
     if(e.key==="ArrowLeft"){rot-=7;setMotor(.62,.08)}if(e.key==="ArrowRight"){rot+=7;setMotor(.62,.08)}
-    x=clamp(x,4,96);y=clamp(65-depthPos,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
+    x=clamp(x,4,96);y=clamp(65-depthPos*0.22,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
   }
   addEventListener("keydown",key,{passive:false});
 

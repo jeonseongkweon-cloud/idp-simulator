@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020711">
-  <title>IDP Drone Simulator v5.6</title>
+  <title>IDP Drone Simulator v5.7</title>
   <link rel="icon" href="assets/img/idp-logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -14,7 +14,7 @@
     <div class="boot-card">
       <img src="assets/img/idp-logo.png" class="boot-logo" alt="IDP">
       <p class="micro">INTERNATIONAL DRONE PATROL</p>
-      <h1>IDP DRONE SIMULATOR <span class="vtag">v5.6</span></h1>
+      <h1>IDP DRONE SIMULATOR <span class="vtag">v5.7</span></h1>
       <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
       <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
       <small>v2.0 · Realistic Flight / Wildfire Mission / Scoring</small>
@@ -24,7 +24,7 @@
   <header class="topbar">
     <a class="brand" href="#home">
       <img src="assets/img/idp-logo.png" alt="">
-      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v5.6</small></span>
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v5.7</small></span>
     </a>
     <nav>
       <a href="#training">TRAINING</a>
@@ -42,23 +42,18 @@
   <main id="home">
     <section class="hero">
       <div class="scanlines"></div><div class="hero-vignette"></div>
-      <div class="hero-content">
-        <div class="hero-clean-title">
-          <p class="eyebrow">IDP DRONE TRAINING SYSTEM · v5.6</p>
-          <h3>국제드론순찰대 드론 시뮬레이터</h3>
-          <p class="hero-copy">LEVEL 1부터 LEVEL 10 MASTER까지 단계별 드론 훈련</p>
-        </div>
-        <div class="hero-actions">
-          <button class="btn btn-blue" onclick="document.getElementById('training').scrollIntoView({behavior:'smooth'})">10 LEVEL 훈련 시작 <small>LEVEL MAP에서 단계별 도전</small></button>
-          <button class="btn btn-gold" data-open="simulator">LEVEL 1 무료 체험 <small>누구나 이용 가능</small></button>
-          <button class="btn btn-gold" data-open="login">ID 로그인 <small>회원 기록 연동 준비</small></button>
-        </div>
-        <div class="progress-strip">
-          <span><b>01</b> 이륙</span><i>›</i><span><b>02</b> 5m 상승</span><i>›</i>
-          <span><b>03</b> 전진</span><i>›</i><span><b>04</b> 정밀착륙</span><i>›</i>
-          <span><b>05</b> 결과/별점</span>
-        </div>
-      </div>
+      <div class="hero-content">        <div class="hero-control-dock">
+          <div class="hero-actions">
+            <button class="btn btn-blue" onclick="document.getElementById('training').scrollIntoView({behavior:'smooth'})">10 LEVEL 훈련 시작 <small>LEVEL MAP에서 단계별 도전</small></button>
+            <button class="btn btn-gold" data-open="simulator">LEVEL 1 무료 체험 <small>누구나 이용 가능</small></button>
+            <button class="btn btn-gold" data-open="login">ID 로그인 <small>회원 기록 연동 준비</small></button>
+          </div>
+          <div class="progress-strip">
+            <span><b>01</b> 이륙</span><i>›</i><span><b>02</b> 5m 상승</span><i>›</i>
+            <span><b>03</b> 전진</span><i>›</i><span><b>04</b> 정밀착륙</span><i>›</i>
+            <span><b>05</b> 결과/별점</span>
+          </div>
+        </div></div>
     </section>
 
     <section class="level-map-section" id="training">
@@ -208,11 +203,6 @@
       <div class="outdoor-photo-layer" id="outdoorPhoto"></div>
       <div class="outdoor-depth depth-far" id="depthFar"></div>
       <div class="outdoor-depth depth-near" id="depthNear"></div>
-      <div class="training-overlay">
-        <div class="safety-cone oc1"></div><div class="safety-cone oc2"></div>
-        <div class="safety-cone oc3"></div><div class="safety-cone oc4"></div>
-        <div class="training-gate"><span>TRAINING GATE</span></div>
-      </div>
       <div class="sky-glow"></div>
       <div class="mountains legacy-mountains"></div>
       <div class="ground-grid"></div>

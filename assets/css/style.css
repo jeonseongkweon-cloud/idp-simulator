@@ -320,3 +320,55 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
   letter-spacing:.09em;
   color:#7de9ff;
 }
+
+/* ===== v5.7 CLEANUP ===== */
+
+/* Boot emblem: remove visible square corners; show only circular emblem. */
+.boot-logo{
+  border-radius:50%!important;
+  clip-path:circle(49% at 50% 50%)!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.boot-card{background:transparent!important}
+
+/* Hero: background art remains, but NO duplicate text/logo overlays. */
+.hero-content{
+  justify-content:flex-end!important;
+  padding:0 0 42px!important;
+  pointer-events:none;
+}
+.hero-control-dock{
+  pointer-events:auto;
+  width:min(980px,92vw);
+  padding:14px 18px;
+  border:1px solid rgba(50,205,255,.38);
+  border-radius:16px;
+  background:linear-gradient(180deg,rgba(1,13,24,.72),rgba(1,7,14,.90));
+  backdrop-filter:blur(8px);
+  box-shadow:0 12px 40px rgba(0,0,0,.42);
+}
+.hero-control-dock .hero-actions{margin:0 0 12px!important}
+.hero-control-dock .progress-strip{margin:0!important}
+
+/* Use CLEAN photo background: no duplicate dashboard/drone/H/cones. */
+.outdoor-photo-layer{
+  background:
+    linear-gradient(180deg,rgba(3,18,27,.06),rgba(2,13,18,.14)),
+    url('../img/outdoor-training-clean.jpg') center 54%/cover no-repeat!important;
+}
+
+/* Disable old extra training objects entirely. */
+.training-overlay,.safety-cone,.training-gate{display:none!important}
+
+/* Keep ONE landing H only. */
+.flight-area .landing-pad{
+  border:6px solid #ffd34d!important;
+  background:radial-gradient(ellipse at center,#39433d 0 56%,#202824 57% 100%)!important;
+  box-shadow:0 0 26px rgba(255,211,77,.72),0 10px 18px rgba(0,0,0,.28)!important;
+}
+
+/* More obvious depth travel, smooth transitions. */
+.outdoor-photo-layer,.depth-far,.depth-near,.landing-pad{
+  will-change:transform;
+}
