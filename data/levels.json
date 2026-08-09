@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "levels": [
+    {
+      "level": 1,
+      "name": "Basic Flight",
+      "ko": "기초비행",
+      "access": "public",
+      "status": "active"
+    },
+    {
+      "level": 2,
+      "name": "Hovering",
+      "ko": "호버링",
+      "access": "member",
+      "status": "locked"
+    },
+    {
+      "level": 3,
+      "name": "Precision Landing",
+      "ko": "정밀착륙",
+      "access": "member",
+      "status": "locked"
+    },
+    {
+      "level": 4,
+      "name": "Obstacle Course",
+      "ko": "장애물",
+      "access": "member",
+      "status": "locked"
+    },
+    {
+      "level": 5,
+      "name": "Patrol Mission",
+      "ko": "순찰미션",
+      "access": "member",
+      "status": "locked"
+    }
+  ]
+}

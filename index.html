@@ -1,138 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDP Virtual Simulator</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      height: 100vh;
-      background:
-        radial-gradient(circle at center, #12394a 0%, #06151d 45%, #020608 100%);
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-
-    .screen {
-      width: 92%;
-      max-width: 1100px;
-      text-align: center;
-      padding: 60px 30px;
-      border: 1px solid rgba(72, 220, 255, 0.35);
-      background: rgba(0, 15, 22, 0.72);
-      box-shadow:
-        0 0 40px rgba(0, 190, 255, 0.18),
-        inset 0 0 50px rgba(0, 190, 255, 0.05);
-    }
-
-    .system {
-      color: #62e5ff;
-      letter-spacing: 5px;
-      font-size: 14px;
-      margin-bottom: 25px;
-    }
-
-    h1 {
-      font-size: clamp(42px, 7vw, 82px);
-      letter-spacing: 8px;
-      margin-bottom: 12px;
-    }
-
-    h2 {
-      color: #62e5ff;
-      font-size: clamp(18px, 3vw, 30px);
-      letter-spacing: 5px;
-      margin-bottom: 35px;
-    }
-
-    .line {
-      width: 160px;
-      height: 2px;
-      background: #62e5ff;
-      margin: 0 auto 35px;
-      box-shadow: 0 0 15px #62e5ff;
-    }
-
-    .kr {
-      font-size: 24px;
-      margin-bottom: 12px;
-    }
-
-    .description {
-      color: #9fb9c3;
-      font-size: 15px;
-      letter-spacing: 2px;
-      margin-bottom: 45px;
-    }
-
-    button {
-      padding: 17px 50px;
-      border: 1px solid #62e5ff;
-      background: rgba(0, 180, 230, 0.1);
-      color: #ffffff;
-      font-size: 16px;
-      letter-spacing: 4px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      background: #62e5ff;
-      color: #001018;
-      box-shadow: 0 0 30px #62e5ff;
-    }
-
-    .footer {
-      margin-top: 45px;
-      color: #55727d;
-      font-size: 11px;
-      letter-spacing: 2px;
-    }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#020711">
+  <meta name="description" content="국제드론순찰대 IDP Drone Simulator">
+  <title>IDP Drone Simulator | 국제드론순찰대</title>
+  <link rel="icon" href="assets/img/idp-logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-
 <body>
-
-  <div class="screen">
-
-    <div class="system">
-      IDP TRAINING SYSTEM // ONLINE
+  <div id="boot" class="boot" role="dialog" aria-modal="true">
+    <div class="boot-grid"></div>
+    <div class="boot-card">
+      <img src="assets/img/idp-logo.png" alt="국제드론순찰대 로고" class="boot-logo">
+      <p class="micro">INTERNATIONAL DRONE PATROL</p>
+      <h1>IDP DRONE SIMULATOR</h1>
+      <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
+      <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
+      <small>버튼을 누르면 사운드 및 애니메이션이 시작됩니다.</small>
     </div>
-
-    <h1>IDP</h1>
-
-    <h2>VIRTUAL DRONE SIMULATOR</h2>
-
-    <div class="line"></div>
-
-    <div class="kr">
-      국제드론순찰대 가상훈련 시스템
-    </div>
-
-    <div class="description">
-      INTERNATIONAL DRONE PATROL · VIRTUAL TRAINING PLATFORM
-    </div>
-
-    <button onclick="alert('IDP SIMULATOR SYSTEM READY')">
-      START TRAINING
-    </button>
-
-    <div class="footer">
-      INTERNATIONAL DRONE PATROL · IDP VIRTUAL TRAINING SYSTEM
-    </div>
-
   </div>
 
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="IDP 홈">
+      <img src="assets/img/idp-logo.png" alt="">
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL</small></span>
+    </a>
+    <nav>
+      <a href="#training">TRAINING</a>
+      <a href="#mission">MISSION</a>
+      <a href="#practice">PRACTICE</a>
+      <a href="#ranking">RANKING</a>
+      <a href="#guide">GUIDE</a>
+    </nav>
+    <div class="top-actions">
+      <button id="soundToggle" class="icon-btn" title="사운드">🔊</button>
+      <button id="fullscreenBtn" class="icon-btn" title="전체화면">⛶</button>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="scanlines"></div>
+      <div class="hero-vignette"></div>
+      <div class="hero-content">
+        <img class="hero-logo float" src="assets/img/idp-logo.png" alt="국제드론순찰대">
+        <p class="eyebrow">A SAFE WORLD, OUR MISSION</p>
+        <h2>INTERNATIONAL<br><span>DRONE PATROL</span></h2>
+        <h3>국제드론순찰대 드론 시뮬레이터</h3>
+        <p class="hero-copy">단계별 미션으로 드론 조종을 배우고, 안전한 사회를 만드는 미래형 교육 플랫폼</p>
+        <div class="hero-actions">
+          <button class="btn btn-blue" data-open="simulator">초급 체험 <small>누구나 이용 가능</small></button>
+          <button class="btn btn-gold" data-open="login">ID 로그인 <small>LEVEL 2 이상</small></button>
+        </div>
+        <div class="progress-strip">
+          <span><b>01</b> 기초비행</span><i>›</i>
+          <span><b>02</b> 호버링</span><i>›</i>
+          <span><b>03</b> 정밀착륙</span><i>›</i>
+          <span><b>04</b> 장애물</span><i>›</i>
+          <span><b>05</b> 순찰미션</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="command-grid" id="training">
+      <article class="command-card blue" data-open="simulator">
+        <span class="card-icon">⌁</span><p>TRAINING</p><h4>훈련 모드</h4>
+        <small>LEVEL 1 기초비행부터 시작</small>
+        <button>훈련 시작 →</button>
+      </article>
+      <article class="command-card purple" id="mission">
+        <span class="card-icon">◎</span><p>MISSION</p><h4>미션 모드</h4>
+        <small>순찰 · 수색 · 재난 대응 미션</small>
+        <button data-locked="true">ID 필요 🔒</button>
+      </article>
+      <article class="command-card green" id="practice">
+        <span class="card-icon">◇</span><p>PRACTICE</p><h4>연습 모드</h4>
+        <small>자유 비행과 반복 훈련</small>
+        <button data-open="simulator">연습 시작 →</button>
+      </article>
+      <article class="command-card orange" id="ranking">
+        <span class="card-icon">♛</span><p>RANKING</p><h4>랭킹 & 기록</h4>
+        <small>개인 기록과 전국 랭킹</small>
+        <button data-locked="true">준비중</button>
+      </article>
+      <article class="command-card cyan" id="guide">
+        <span class="card-icon">▤</span><p>GUIDE</p><h4>가이드 & 교육</h4>
+        <small>키보드 조종법 · 안전수칙</small>
+        <button data-open="guide">자세히 보기 →</button>
+      </article>
+    </section>
+
+    <section class="level-panel">
+      <div>
+        <p class="micro">TRAINING ACCESS</p>
+        <h3>초급은 누구나, 다음 단계부터 개인 ID 인증</h3>
+      </div>
+      <div class="level-row">
+        <button class="level active" data-open="simulator"><b>LEVEL 1</b><span>초급</span><em>OPEN</em></button>
+        <button class="level locked" data-locked="true"><b>LEVEL 2</b><span>중급</span><em>🔒</em></button>
+        <button class="level locked" data-locked="true"><b>LEVEL 3</b><span>고급</span><em>🔒</em></button>
+        <button class="level locked" data-locked="true"><b>LEVEL 4</b><span>전문가</span><em>🔒</em></button>
+        <button class="level locked" data-locked="true"><b>LEVEL 5</b><span>마스터</span><em>★</em></button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><b>INTERNATIONAL DRONE PATROL</b><span>PROTECTING PEOPLE · PROTECTING COMMUNITIES · PROTECTING THE FUTURE</span></div>
+    <div class="contact">
+      <a href="tel:01044772772">☎ 010-4477-2772</a>
+      <a href="https://idf.ai.kr" target="_blank" rel="noopener">🌐 idf.ai.kr</a>
+      <a href="mailto:jeonseongkweon@gmail.com">✉ jeonseongkweon@gmail.com</a>
+      <a href="tel:+8228221822">☏ 국제문의 +82-2-822-1822</a>
+    </div>
+  </footer>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" data-close>×</button>
+      <img src="assets/img/idp-logo.png" alt="" class="modal-logo">
+      <p class="micro">SECURE MEMBER ACCESS</p>
+      <h3>개인 ID 인증</h3>
+      <p>LEVEL 2 이상의 교육 과정은 국제드론순찰대 개인 ID가 필요합니다.</p>
+      <input id="memberId" type="text" placeholder="예: IDP-KR-000001" autocomplete="off">
+      <button id="verifyId" class="btn btn-gold">ID 인증하기</button>
+      <div id="loginResult" class="result">※ Google Sheet 연동 전에는 데모 ID <b>IDP2026</b> 사용 가능</div>
+    </div>
+  </div>
+
+  <!-- GUIDE MODAL -->
+  <div id="guideModal" class="modal" aria-hidden="true">
+    <div class="modal-card wide">
+      <button class="modal-close" data-close>×</button>
+      <p class="micro">KEYBOARD CONTROL GUIDE</p>
+      <h3>PC 기본 조종법</h3>
+      <div class="keys">
+        <span><kbd>W</kbd> 전진</span><span><kbd>S</kbd> 후진</span>
+        <span><kbd>A</kbd> 좌측 이동</span><span><kbd>D</kbd> 우측 이동</span>
+        <span><kbd>↑</kbd> 상승</span><span><kbd>↓</kbd> 하강</span>
+        <span><kbd>←</kbd> 좌회전</span><span><kbd>→</kbd> 우회전</span>
+        <span><kbd>SPACE</kbd> 이륙 / 착륙</span><span><kbd>R</kbd> 위치 초기화</span>
+        <span><kbd>P</kbd> 일시정지</span><span><kbd>F</kbd> 전체화면</span>
+      </div>
+      <p class="notice">실제 드론 비행 시에는 관련 법규, 비행구역, 안전수칙을 반드시 확인하십시오. 본 시뮬레이터는 교육·연습용입니다.</p>
+    </div>
+  </div>
+
+  <!-- SIMULATOR -->
+  <section id="simulatorView" class="simulator-view" aria-hidden="true">
+    <div class="sim-bg"></div>
+    <div class="hud-top">
+      <div><b>IDP / LEVEL 1</b><span>BASIC FLIGHT TRAINING</span></div>
+      <div class="telemetry">
+        <span>ALT <b id="alt">0.0</b> m</span>
+        <span>SPD <b id="spd">0.0</b> m/s</span>
+        <span>SCORE <b id="score">0000</b></span>
+        <span>TIME <b id="timer">00:00</b></span>
+      </div>
+      <button id="exitSim" class="hud-btn">EXIT</button>
+    </div>
+
+    <div class="mission-box">
+      <small>MISSION 01</small>
+      <b id="missionTitle">TAKE OFF</b>
+      <span id="missionText">SPACE 키를 눌러 이륙하십시오.</span>
+    </div>
+
+    <div id="flightArea" class="flight-area">
+      <div class="horizon"></div>
+      <div class="landing-pad"><span>H</span></div>
+      <div id="drone" class="drone">
+        <div class="arm a1"></div><div class="arm a2"></div>
+        <div class="rotor r1"></div><div class="rotor r2"></div><div class="rotor r3"></div><div class="rotor r4"></div>
+        <div class="body"></div><div class="camera"></div>
+      </div>
+      <div id="missionFlash" class="mission-flash">MISSION COMPLETE</div>
+    </div>
+
+    <div class="hud-bottom">
+      <div class="radar"><i></i><span>RADAR</span></div>
+      <div class="control-hint">W/S 전후 · A/D 좌우 · ↑/↓ 고도 · ←/→ 회전 · SPACE 이륙/착륙 · R 초기화</div>
+      <button id="pauseBtn" class="hud-btn">PAUSE</button>
+    </div>
+  </section>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/simulator.js"></script>
 </body>
 </html>
