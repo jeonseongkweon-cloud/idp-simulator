@@ -280,3 +280,43 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 /* v5.5 CONTROL FIX
    W/S changes scene depth only; arrow keys change altitude only. */
 .flight-area .landing-pad{transition:transform .08s linear}
+
+/* ===== v5.6 HERO CLEANUP =====
+   Background image already contains IDP logo/title, so duplicate overlay branding is removed. */
+.hero-content{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  height:100%!important;
+  padding:0 0 58px!important;
+}
+.hero-clean-title{
+  width:min(900px,90vw);
+  padding:14px 22px 10px;
+  border:1px solid rgba(66,205,255,.35);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(2,14,25,.70),rgba(2,8,16,.88));
+  backdrop-filter:blur(8px);
+  box-shadow:0 0 30px rgba(0,0,0,.35);
+}
+.hero-clean-title h3{
+  margin:2px 0 5px!important;
+  font-size:clamp(22px,2.4vw,35px)!important;
+  color:#ffd36e!important;
+}
+.hero-clean-title .hero-copy{margin:0;color:#d9edf7!important}
+.hero .hero-actions{margin:14px 0 12px!important}
+.hero .progress-strip{background:rgba(2,10,18,.80)!important}
+.hero-logo{display:none!important}
+.hero h2{display:none!important}
+
+/* Strong visual confirmation that W/S is depth, not altitude */
+.engine-indicator:after{
+  content:"W/S = FORWARD / BACK";
+  display:block;
+  margin-top:3px;
+  font-size:7px;
+  letter-spacing:.09em;
+  color:#7de9ff;
+}

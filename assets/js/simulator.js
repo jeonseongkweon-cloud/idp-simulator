@@ -5,7 +5,7 @@
   const title=$("#missionTitle"),text=$("#missionText"),missionNo=$("#missionNo"),flash=$("#missionFlash"),warning=$("#warning");
   const wildfire=$("#wildfireZone"),target=$("#targetMarker"),hoverZone=$("#hoverZone");
   const rings=[$("#ring1"),$("#ring2"),$("#ring3")], missingPerson=$("#missingPerson"),coordBox=$("#coordBox"),nightBeacon=$("#nightBeacon");
-  let x=50,y=65,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode="basic",battery=100,completeShown=false;
+  let x=50,y=65,depthPos=0,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode="basic",battery=100,completeShown=false;
   let moveVX=0,moveVY=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,searchFound=false,fireObserved=false,currentLevel=1, motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0; const modeLevel={basic:1,hover:2,rings:3,search:4,wildfire:5,night:6,disaster:7,patrol:8,rescue:9,master:10}; const disasterMarker=$("#disasterMarker"), patrolPoints=[$("#patrolPoint1"),$("#patrolPoint2"),$("#patrolPoint3")], masterCore=$("#masterCore");
 
 
@@ -43,9 +43,10 @@
   function draw(){
     const scale=1+alt*.008;
     const activeMove=(Date.now()-lastMove<240)&&flying;
-    const depth=65-y; // + = forward, - = backward
-    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depth*2);
-    const screenY=65 - alt*0.34; // altitude ONLY controls vertical screen position
+    const depth=depthPos; // + = forward, - = backward
+    y=clamp(65-depthPos,10,88); // mission-coordinate only; NOT screen altitude
+    const depthHud=document.getElementById("depthHud"); if(depthHud) depthHud.textContent=Math.round(depthPos*2);
+    const screenY=65 - alt*0.34; // ONLY ↑/↓ changes vertical screen position
     drone.style.left=x+"%";drone.style.top=clamp(screenY,25,78)+"%";
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${scale})`;
     drone.classList.toggle("flying",flying);drone.classList.toggle("fast",activeMove);
@@ -54,32 +55,32 @@
     speedLines.classList.toggle("active",activeMove&&Math.hypot(moveVX,moveVY)>0);
     flightArea.classList.toggle("outdoor-moving",activeMove&&Math.hypot(moveVX,moveVY)>0);
     if(outdoorPhoto){
-      const depth=65-y;
+      const depth=depthPos;
       const bgX=(50-x)*0.12;
       const bgY=depth*0.04;
-      const bgScale=1.05 + alt*0.0005 + depth*0.009;
+      const bgScale=1.05 + alt*0.0005 + depth*0.013;
       outdoorPhoto.style.transform=`translate(${bgX}px,${bgY}px) scale(${clamp(bgScale,.88,1.38)})`;
     }
     if(depthFar){
-      const depth=65-y;
+      const depth=depthPos;
       depthFar.style.transform=`translate(${(50-x)*0.035}px,${depth*0.035}px) scale(${1+depth*0.0007})`;
     }
     if(depthNear){
-      const depth=65-y;
+      const depth=depthPos;
       depthNear.style.transform=`translate(${(50-x)*0.15}px,${depth*0.085}px) scale(${1+depth*0.002})`;
     }
     if(trainingOverlay){
-      const depth=65-y;
-      trainingOverlay.style.transform=`translateY(${depth*0.04}px) scale(${clamp(1+depth*0.010,.78,1.34)})`;
+      const depth=depthPos;
+      trainingOverlay.style.transform=`translateY(${depth*0.02}px) scale(${clamp(1+depth*0.015,.70,1.55)})`;
       trainingOverlay.style.transformOrigin="50% 65%";
     }
     if(groundGrid){
-      const depth=65-y;
+      const depth=depthPos;
       groundGrid.style.backgroundPosition=`0 ${depth*7}px, ${depth*4}px 0`;
     }
     if(landingPad){
-      const depth=65-y;
-      const padScale=clamp(1+depth*0.012,.68,1.45);
+      const depth=depthPos;
+      const padScale=clamp(1+depth*0.018,.58,1.65);
       landingPad.style.transform=`translate(-50%,-50%) rotateX(55deg) scale(${padScale})`;
     }
     const shadow=drone.querySelector(".drone-shadow");shadow.style.transform=`scale(${clamp(1.35-alt*.028,.28,1.35)})`;shadow.style.opacity=clamp(.82-alt*.025,.12,.82);shadow.style.filter=`blur(${clamp(5+alt*.38,5,18)}px)`;
@@ -95,7 +96,7 @@
     view.classList.remove("night-mode","search-mode");flightArea.classList.remove("outdoor-moving");disasterMarker.classList.remove("show");patrolPoints.forEach(p=>p.classList.remove("show"));masterCore.classList.remove("show");
   }
   function resetCommon(){
-    x=50;y=65;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();drone.classList.remove("climbing","landing");motorOff();draw();
+    x=50;y=65;depthPos=0;rot=0;alt=0;score=0;flying=false;paused=false;start=Date.now();lastMove=0;battery=100;completeShown=false;moveVX=moveVY=tiltX=tiltY=0;hold=0;ringIndex=0;searchFound=false;fireObserved=false;resetEnv();drone.classList.remove("climbing","landing");motorOff();draw();
   }
 
   const missionSets={
@@ -217,8 +218,8 @@
     if(e.code==="Space"){if(!paused)toggleFlight();return}
     if(paused||!flying)return;
     const step=1.15;lastMove=Date.now();moveVX=moveVY=0;
-    if(k==="w"){y-=step;moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
-    if(k==="s"){y+=step;moveVY=1;tiltY=18;setMotor(.67,.10)}
+    if(k==="w"){depthPos=clamp(depthPos+step,-23,55);moveVY=-1;tiltY=-18;setMotor(.72,.18);if(mode==="basic"&&stage===2){addScore(250,"FORWARD");setMission(3)}}
+    if(k==="s"){depthPos=clamp(depthPos-step,-23,55);moveVY=1;tiltY=18;setMotor(.67,.10)}
     if(k==="a"){x-=step;moveVX=-1;tiltX=-17;setMotor(.69,.12)}
     if(k==="d"){x+=step;moveVX=1;tiltX=17;setMotor(.69,.12)}
     if(e.key==="ArrowUp"){drone.classList.add("climbing");setMotor(.82,.2);setTimeout(()=>drone.classList.remove("climbing"),220);
@@ -234,7 +235,7 @@
     }
     if(e.key==="ArrowDown"){setMotor(.42);alt=clamp(alt-.5,0,30)}
     if(e.key==="ArrowLeft"){rot-=7;setMotor(.62,.08)}if(e.key==="ArrowRight"){rot+=7;setMotor(.62,.08)}
-    x=clamp(x,4,96);y=clamp(y,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
+    x=clamp(x,4,96);y=clamp(65-depthPos,10,88);draw();setTimeout(()=>{tiltX*=.45;tiltY*=.45;if(flying)setMotor(.52);draw()},140);
   }
   addEventListener("keydown",key,{passive:false});
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020711">
-  <title>IDP Drone Simulator v5.5</title>
+  <title>IDP Drone Simulator v5.6</title>
   <link rel="icon" href="assets/img/idp-logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -14,7 +14,7 @@
     <div class="boot-card">
       <img src="assets/img/idp-logo.png" class="boot-logo" alt="IDP">
       <p class="micro">INTERNATIONAL DRONE PATROL</p>
-      <h1>IDP DRONE SIMULATOR <span class="vtag">v5.5</span></h1>
+      <h1>IDP DRONE SIMULATOR <span class="vtag">v5.6</span></h1>
       <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
       <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
       <small>v2.0 · Realistic Flight / Wildfire Mission / Scoring</small>
@@ -24,7 +24,7 @@
   <header class="topbar">
     <a class="brand" href="#home">
       <img src="assets/img/idp-logo.png" alt="">
-      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v5.5</small></span>
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v5.6</small></span>
     </a>
     <nav>
       <a href="#training">TRAINING</a>
@@ -43,11 +43,11 @@
     <section class="hero">
       <div class="scanlines"></div><div class="hero-vignette"></div>
       <div class="hero-content">
-        <img class="hero-logo float" src="assets/img/idp-logo.png" alt="IDP">
-        <p class="eyebrow">A SAFE WORLD, OUR MISSION</p>
-        <h2>INTERNATIONAL<br><span>DRONE PATROL</span></h2>
-        <h3>국제드론순찰대 드론 시뮬레이터</h3>
-        <p class="hero-copy">LEVEL 1부터 LEVEL 10 MASTER까지 단계별 드론 훈련</p>
+        <div class="hero-clean-title">
+          <p class="eyebrow">IDP DRONE TRAINING SYSTEM · v5.6</p>
+          <h3>국제드론순찰대 드론 시뮬레이터</h3>
+          <p class="hero-copy">LEVEL 1부터 LEVEL 10 MASTER까지 단계별 드론 훈련</p>
+        </div>
         <div class="hero-actions">
           <button class="btn btn-blue" onclick="document.getElementById('training').scrollIntoView({behavior:'smooth'})">10 LEVEL 훈련 시작 <small>LEVEL MAP에서 단계별 도전</small></button>
           <button class="btn btn-gold" data-open="simulator">LEVEL 1 무료 체험 <small>누구나 이용 가능</small></button>
@@ -259,7 +259,7 @@
 
     <div class="hud-bottom">
       <div class="radar"><i></i><span>RADAR</span></div>
-      <div class="control-hint">W=전진 · S=후진 · A/D=좌우 · ↑=상승 · ↓=하강 · ←/→=회전 · SPACE=이륙/착륙 · R=초기화</div>
+      <div class="control-hint">W=전진(앞으로) · S=후진(뒤로) · A/D=좌우 · ↑=상승 · ↓=하강 · ←/→=회전 · SPACE=이륙/착륙 · R=초기화</div>
       <button id="pauseBtn" class="hud-btn">PAUSE</button>
     </div>
   </section>
