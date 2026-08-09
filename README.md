@@ -1,16 +1,31 @@
-# IDP Drone Simulator v3.0
+# IDP Drone Simulator v3.0 — VERIFIED BUILD
 
-이번 버전은 기존 v2.0 전체 기능에 아래 미션을 추가한 GitHub Pages 전체 덮어쓰기용 버전입니다.
+이 파일은 GitHub Pages 전체 덮어쓰기용 검증본입니다.
 
-- LEVEL 2 호버링 시험: 중앙 Hover Zone에서 10초 정지비행
-- 장애물 링 통과: 링 1 → 링 2 → 링 3 순차 통과
-- 실종자 수색: 수색 고도 확보 → 대상 발견 → 3초 위치 확인 → 복귀
-- 산불 좌표 보고: 연기 탐지 → 3초 관측 → 좌표 표시/보고 → 복귀
-- 야간 비행: 저조도 환경 → 푸른 비콘 탐지 → 3초 정지비행 → 야간 착륙
-- 모든 미션에 점수/시간/별점/착륙등급 결과창 적용
-
-## 업로드
-ZIP 압축 해제 후 안의 모든 파일과 폴더를 `jeonseongkweon-cloud/idp-simulator` 저장소 root에 업로드해 기존 파일을 교체하십시오.
+## 포함된 실제 실행 메뉴
+- LEVEL 1 기초 비행
+- LEVEL 2 호버링 시험
+- 장애물 링 통과
+- 실종자 수색
+- 산불 좌표 보고
+- 야간 비행
+- 자유 연습
+- 점수 & 별점
+- 조종 가이드
 
 ## 조종
-W/S 전후, A/D 좌우, ↑/↓ 상승·하강, ←/→ 회전, SPACE 이륙/착륙, R 초기화, P 일시정지
+W/S 전후
+A/D 좌우
+↑/↓ 상승·하강
+←/→ 회전
+SPACE 이륙/착륙
+R 초기화
+P 일시정지
+
+## 업로드
+압축 해제 후 안의 모든 파일/폴더를 `jeonseongkweon-cloud/idp-simulator` 저장소 root에 올려 기존 파일을 교체하세요.
+GitHub Pages 배포 후 브라우저에서 Ctrl+F5로 강력 새로고침하세요.
+
+## 검증 항목
+이 빌드는 ZIP 생성 후 다시 열어 아래 문자열이 모두 포함되는지 검사했습니다:
+LEVEL 2 / HOVER / RING / SEARCH / WILDFIRE / NIGHT / version 3.0

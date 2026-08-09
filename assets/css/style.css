@@ -36,3 +36,5 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 .simulator-view.search-mode .flight-area{background:linear-gradient(#0a3140,#173a31 63%,#081b12)}
 @keyframes beacon{50%{transform:scale(1.5);opacity:.35}}
 @media(max-width:1000px){.missions-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.missions-grid{grid-template-columns:1fr}}
+
+.vtag{font-size:.22em;vertical-align:middle;letter-spacing:.08em;color:#69e6ff;border:1px solid #32c9ff;padding:.25em .45em;border-radius:999px;background:#062238cc;box-shadow:0 0 16px #21c6ff55}
