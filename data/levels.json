@@ -1,40 +1,30 @@
 {
-  "version": "1.0",
-  "levels": [
-    {
-      "level": 1,
-      "name": "Basic Flight",
-      "ko": "기초비행",
-      "access": "public",
-      "status": "active"
+  "version": "2.0",
+  "modes": {
+    "basic": {
+      "public": true,
+      "name": "LEVEL 1 Basic Flight"
     },
-    {
-      "level": 2,
-      "name": "Hovering",
-      "ko": "호버링",
-      "access": "member",
-      "status": "locked"
-    },
-    {
-      "level": 3,
-      "name": "Precision Landing",
-      "ko": "정밀착륙",
-      "access": "member",
-      "status": "locked"
-    },
-    {
-      "level": 4,
-      "name": "Obstacle Course",
-      "ko": "장애물",
-      "access": "member",
-      "status": "locked"
-    },
-    {
-      "level": 5,
-      "name": "Patrol Mission",
-      "ko": "순찰미션",
-      "access": "member",
-      "status": "locked"
+    "wildfire": {
+      "public": true,
+      "name": "Wildfire Watch Mission"
     }
-  ]
+  },
+  "scoring": {
+    "basic": {
+      "takeoff": 200,
+      "altitude": 250,
+      "forward": 250,
+      "landing_max": 800,
+      "time_bonus_max": 500
+    },
+    "wildfire": {
+      "takeoff": 200,
+      "altitude": 300,
+      "detect": 450,
+      "confirm": 650,
+      "landing_max": 800,
+      "time_bonus_max": 500
+    }
+  }
 }
