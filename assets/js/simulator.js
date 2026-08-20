@@ -7,7 +7,7 @@
   const wildfire=$('#wildfireZone'), target=$('#targetMarker'), hoverZone=$('#hoverZone');
   const rings=[$('#ring1'),$('#ring2'),$('#ring3')], missingPerson=$('#missingPerson'), coordBox=$('#coordBox'), nightBeacon=$('#nightBeacon');
   const disasterMarker=$('#disasterMarker'), patrolPoints=[$('#patrolPoint1'),$('#patrolPoint2'),$('#patrolPoint3')], masterCore=$('#masterCore');
-  const landingPad=document.querySelector('.landing-pad'), outdoorPhoto=$('#outdoorPhoto'), groundGrid=document.querySelector('.ground-grid');
+  const landingPad=document.querySelector('.landing-pad'), outdoorPhoto=$('#outdoorPhoto'), groundGrid=document.querySelector('.ground-grid'), groundShadow=$('#groundShadow');
   const outboundGate=$('#outboundGate'), homeBeacon=$('#homeBeacon'), flightTrail=$('#flightTrail');
 
   const HOME={x:50,y:82};
@@ -48,11 +48,20 @@
 
   function draw(){
     const d=homeDistance();
-    const altitudeLift=alt*0.82;
-    const screenY=clamp(y-altitudeLift,8,88);
-    const perspective=clamp(1.08-(HOME.y-y)*0.0055,0.72,1.15);
+    // ALTITUDE is now visually independent from forward/back travel.
+    // The ground shadow stays on the virtual ground while the aircraft rises above it.
+    const altitudeLift=alt*0.72;
+    const screenY=clamp(y-altitudeLift,7,89);
+    const perspective=clamp(1.04-(HOME.y-y)*0.0048,0.78,1.10);
     drone.style.left=x+'%'; drone.style.top=screenY+'%';
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
+    if(groundShadow){
+      groundShadow.style.left=x+'%';
+      groundShadow.style.top=y+'%';
+      groundShadow.style.transform=`translate(-50%,-50%) scale(${clamp(1.22-alt*.028,.34,1.22)})`;
+      groundShadow.style.opacity=clamp(.78-alt*.022,.16,.78);
+      groundShadow.style.filter=`blur(${clamp(7+alt*.32,7,18)}px)`;
+    }
     drone.classList.toggle('flying',flying); drone.classList.toggle('fast',flying&&speed>2.3); drone.classList.toggle('idle-wobble',flying&&speed<.45);
     flightArea.classList.toggle('speeding',flying&&speed>2.3); speedLines.classList.toggle('active',flying&&speed>2.3);
     flightArea.classList.toggle('outdoor-moving',flying&&speed>.7);
@@ -70,7 +79,7 @@
     if(outboundGate){ outboundGate.classList.toggle('reached',turnReached); }
 
     const shadow=drone.querySelector('.drone-shadow');
-    if(shadow){ shadow.style.transform=`scale(${clamp(1.35-alt*.032,.26,1.35)})`; shadow.style.opacity=clamp(.82-alt*.03,.10,.82); shadow.style.filter=`blur(${clamp(5+alt*.42,5,19)}px)`; }
+    if(shadow) shadow.style.display='none';
     altEl.textContent=alt.toFixed(1); spdEl.textContent=speed.toFixed(1); depthHud.textContent=Math.round(d); hdgEl.textContent=String((Math.round(rot)%360+360)%360).padStart(3,'0');
     scoreEl.textContent=String(Math.max(0,Math.round(score))).padStart(4,'0'); batteryEl.textContent=Math.max(0,Math.round(battery));
   }
@@ -144,40 +153,59 @@
 
   function keyState(e,on){
     if(!view.classList.contains('open'))return;
-    const k=e.key.toLowerCase();
-    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)||e.code==='Space') e.preventDefault();
-    if(on && k==='r'){ resetCommon(); setupMode(); setMission(0); return; }
-    if(on && k==='p'){ paused=!paused; $('#pauseBtn').textContent=paused?'RESUME':'PAUSE'; return; }
-    if(on && e.code==='Space'){ if(!paused) toggleFlight(); return; }
-    if(paused||!flying)return;
-    if(k==='w')held.w=on; if(k==='s')held.s=on; if(k==='a')held.a=on; if(k==='d')held.d=on;
-    if(e.key==='ArrowUp')held.up=on; if(e.key==='ArrowDown')held.down=on; if(e.key==='ArrowLeft')held.left=on; if(e.key==='ArrowRight')held.right=on;
+    // Use KeyboardEvent.code so controls work even when Korean IME/Hangul input is active.
+    // e.key may become ㅈ/ㄴ/ㅁ/ㅇ/ㄱ instead of W/S/A/D/R on a Korean keyboard.
+    const code=e.code;
+    const controlled=['KeyW','KeyS','KeyA','KeyD','KeyR','KeyP','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'];
+    if(controlled.includes(code)) e.preventDefault();
+
+    if(on && code==='KeyR'){
+      resetCommon(); setupMode(); setMission(0);
+      if($('#pauseBtn')) $('#pauseBtn').textContent='PAUSE';
+      flashComplete('FLIGHT RESET');
+      return;
+    }
+    if(on && code==='KeyP'){
+      paused=!paused; $('#pauseBtn').textContent=paused?'RESUME':'PAUSE'; clearHeld(); return;
+    }
+    if(on && code==='Space'){
+      if(!paused && !e.repeat) toggleFlight(); return;
+    }
+
+    // Always release a held key on keyup, even if flight state changed mid-keypress.
+    const map={KeyW:'w',KeyS:'s',KeyA:'a',KeyD:'d',ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
+    if(map[code]){
+      if(on && (paused||!flying)) return;
+      held[map[code]]=on;
+    }
   }
-  addEventListener('keydown',e=>keyState(e,true),{passive:false}); addEventListener('keyup',e=>keyState(e,false),{passive:false}); addEventListener('blur',clearHeld);
+  addEventListener('keydown',e=>keyState(e,true),{passive:false});
+  addEventListener('keyup',e=>keyState(e,false),{passive:false});
+  addEventListener('blur',clearHeld);
 
   function flightStep(ts){
     const dt=Math.min(.05,(ts-lastFrame)/1000||.016); lastFrame=ts;
     if(view.classList.contains('open') && !paused && flying){
-      const turnRate=78; // deg/sec
+      const turnRate=92; // deg/sec - clear visible yaw
       if(held.left){rot-=turnRate*dt; lastMove=Date.now();}
       if(held.right){rot+=turnRate*dt; lastMove=Date.now();}
       const rad=rot*Math.PI/180;
       let forward=0, strafe=0;
       if(held.w)forward+=1; if(held.s)forward-=1; if(held.d)strafe+=1; if(held.a)strafe-=1;
       const commanded=Math.hypot(forward,strafe)>0;
-      const targetSpeed=commanded?5.2:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?4.5:2.2));
+      const targetSpeed=commanded?6.4:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
         const n=Math.hypot(forward,strafe)||1; forward/=n; strafe/=n;
         // 5.2 m/s is mapped to ~6.2 screen-% per second: a visible 6-9 second outbound leg.
-        const screenRate=speed*1.2;
+        const screenRate=speed*1.38;
         const dx=(Math.sin(rad)*forward + Math.cos(rad)*strafe)*screenRate*dt;
         const dy=(-Math.cos(rad)*forward + Math.sin(rad)*strafe)*screenRate*dt;
         x=clamp(x+dx,5,95); y=clamp(y+dy,14,87); vx=dx/dt; vy=dy/dt; lastMove=Date.now();
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
         if(held.w) outboundSeconds+=dt;
       } else { vx*=.88; vy*=.88; tiltX*=.88; tiltY*=.88; if(Date.now()-lastMove>250)setMotor(.50); }
-      if(held.up){alt=clamp(alt+3.2*dt,0,30);lastMove=Date.now();setMotor(.82,.2);}
-      if(held.down){alt=clamp(alt-3.0*dt,0,30);lastMove=Date.now();setMotor(.38);}
+      if(held.up){alt=clamp(alt+4.2*dt,0,30);lastMove=Date.now();setMotor(.82,.2);}
+      if(held.down){alt=clamp(alt-4.0*dt,0,30);lastMove=Date.now();setMotor(.38);}
       const d=homeDistance(); maxHomeDistance=Math.max(maxHomeDistance,d);
       basicProgress(dt,d);
       draw();
@@ -234,7 +262,7 @@
     window.IDPProgress?.unlockNext(currentLevel); setTimeout(()=>$('#completeModal').classList.add('open'),650); window.IDPTone?.(880,.4);
   }
 
-  $('#exitSim').onclick=close; $('#pauseBtn').onclick=()=>{paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'};
+  $('#exitSim').onclick=close; $('#pauseBtn').onclick=()=>{paused=!paused;clearHeld();$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'}; const resetBtn=$('#resetFlightBtn'); if(resetBtn) resetBtn.onclick=()=>{resetCommon();setupMode();setMission(0);$('#pauseBtn').textContent='PAUSE';flashComplete('FLIGHT RESET')};
   $('#retryBtn').onclick=()=>{$('#completeModal').classList.remove('open');open(mode,currentLevel)}; $('#homeBtn').onclick=()=>{$('#completeModal').classList.remove('open');close()};
   window.IDPSim={open,close};
 })();

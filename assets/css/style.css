@@ -404,3 +404,18 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 @keyframes speedBreath{50%{opacity:.45}}
 .landing-pad{left:50%!important;top:82%!important}
 @media(max-width:620px){.outbound-gate{width:120px;height:70px;top:30%}.home-beacon{width:66px;height:66px}}
+
+
+/* ===== IDP Simulator v6.1 INPUT + ALTITUDE FIX ===== */
+.ground-shadow-v61{
+  position:absolute;left:50%;top:82%;width:126px;height:30px;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.70) 0 28%,rgba(0,0,0,.38) 48%,rgba(0,0,0,0) 74%);
+  z-index:6;pointer-events:none;transform:translate(-50%,-50%);will-change:left,top,transform,opacity,filter;
+}
+.real-drone .drone-shadow{display:none!important}
+.hud-actions{display:flex;gap:8px;align-items:center}
+.reset-btn{border-color:rgba(255,196,73,.62)!important;color:#ffe39a!important}
+.reset-btn:hover{background:rgba(255,188,52,.12)!important}
+/* Forward/back uses world position; altitude never changes aircraft scale. */
+.real-drone{transform-origin:50% 50%!important}
+@media(max-width:720px){.reset-btn{display:none}.hud-actions{gap:4px}}
