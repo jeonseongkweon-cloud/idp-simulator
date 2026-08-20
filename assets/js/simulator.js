@@ -20,7 +20,7 @@
   let vx=0,vy=0,speed=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,currentLevel=1;
   let motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0;
   let lastFrame=performance.now(), outboundSeconds=0, maxHomeDistance=0, turnReached=false;
-  let turnAssistHold=0, autoHomeTurn=false, autoTurnDir=1;
+  let turnAssistHold=0, bothTurnHold=0, autoHomeTurn=false, autoTurnDir=1, l2TurnStartRot=0, l2TurnTargetRot=0;
   const held={w:false,s:false,a:false,d:false,up:false,down:false,left:false,right:false};
   const modeLevel={basic:1,hover:2,rings:3,search:4,wildfire:5,night:6,disaster:7,patrol:8,rescue:9,master:10};
 
@@ -68,7 +68,7 @@
       let scale=.34+progress*1.05;
       let opacity=clamp(.25+progress*1.0,0,1);
       if(ahead<0){ top=66+Math.min(28,Math.abs(ahead)*2.1); scale=1.40+Math.min(.55,Math.abs(ahead)*.025); opacity=clamp(1-Math.abs(ahead)/12,0,.75); }
-      const lateral=w.x; // v6.8: world X now matches screen X so visual centering = numeric centering
+      const lateral=w.x; // v6.9: world X now matches screen X so visual centering = numeric centering
       g.style.left=lateral+'%'; g.style.top=top+'%'; g.style.opacity=opacity;
       g.style.transform=`translate(-50%,-50%) scale(${scale})`;
       const activeIndex=stage>=2 && stage<=4 ? stage-2 : -1;
@@ -89,7 +89,7 @@
     // while altitude moves the aircraft vertically above its ground track.
     const altitudeLift=alt*0.72;
     const depthTravel=Math.max(0,HOME.y-y);
-    // v6.8: LEVEL 2 uses a camera-relative aircraft position.
+    // v6.9: LEVEL 2 uses a camera-relative aircraft position.
     // Forward/back travel is shown by gates/ground/background moving, not by the aircraft climbing into the mountains.
     const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.36 : (mode==='hover' ? 69 : y);
     const hoverLift=(mode==='hover') ? alt*0.74 : altitudeLift;
@@ -99,7 +99,7 @@
       : (mode==='hover' ? clamp(1.12-depthTravel*0.0062,0.52,1.12) : clamp(1.04-depthTravel*0.0048,0.78,1.10));
     drone.style.left=x+'%'; drone.style.top=screenY+'%';
     if(mode==='hover'){
-      // v6.8: heading is yaw, not an upside-down 2D spin. rotateY gives a 2.5D turn effect.
+      // v6.9: heading is yaw, not an upside-down 2D spin. rotateY gives a 2.5D turn effect.
       drone.style.transform=`translate(-50%,-50%) rotateZ(${tiltX*.22}deg) rotateX(${tiltY}deg) rotateY(${rot}deg) scale(${perspective})`;
     } else {
       drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
@@ -146,7 +146,7 @@
   }
   function resetCommon(){
     x=HOME.x; y=HOME.y; rot=0; alt=0; score=0; flying=false; paused=false; start=Date.now(); lastMove=0; battery=100; completeShown=false;
-    vx=vy=speed=tiltX=tiltY=0; hold=0; ringIndex=0; outboundSeconds=0; maxHomeDistance=0; turnReached=false; turnAssistHold=0; autoHomeTurn=false; clearHeld(); resetEnv(); drone.classList.remove('climbing','landing'); motorOff(); draw();
+    vx=vy=speed=tiltX=tiltY=0; hold=0; ringIndex=0; outboundSeconds=0; maxHomeDistance=0; turnReached=false; turnAssistHold=0; bothTurnHold=0; autoHomeTurn=false; clearHeld(); resetEnv(); drone.classList.remove('climbing','landing'); motorOff(); draw();
   }
 
   const missionSets={
@@ -159,7 +159,7 @@
       ['MISSION 06','RETURN HOME','W 키로 HOME 착륙장까지 직접 복귀하십시오.'],
       ['MISSION 07','PRECISION LAND','H 위에서 고도 1m 이하로 낮춘 뒤 SPACE로 착륙하십시오.']
     ],
-    hover:[['LEVEL 2 / 01','TAKE OFF','SPACE 키로 이륙하여 2.5D 게이트 코스를 시작하십시오.'],['LEVEL 2 / 02','CLIMB TO 8m','↑ 키로 고도 8m 이상을 확보하십시오.'],['LEVEL 2 / 03','GATE 1 · 25m','W로 전진하여 정면의 GATE 1 중앙을 통과하십시오.'],['LEVEL 2 / 04','GATE 2 · LEFT','W로 전진하면서 A로 좌측 코스 GATE 2를 통과하십시오.'],['LEVEL 2 / 05','GATE 3 · RIGHT','W로 전진하면서 D로 우측 코스 GATE 3를 통과하십시오.'],['LEVEL 2 / 06','TURN 180° HOME','A 또는 D를 길게 눌러 HOME 방향 자동 180° 선회를 실행하십시오.'],['LEVEL 2 / 07','RETURN HOME','W로 2.5D 코스를 역주행하여 HOME으로 복귀하십시오.'],['LEVEL 2 / 08','PRECISION LAND','HOME에서 ↓로 고도를 1m 이하로 낮추고 SPACE로 착륙하십시오.']],
+    hover:[['LEVEL 2 / 01','TAKE OFF','SPACE 키로 이륙하여 2.5D 게이트 코스를 시작하십시오.'],['LEVEL 2 / 02','CLIMB TO 8m','↑ 키로 고도 8m 이상을 확보하십시오.'],['LEVEL 2 / 03','GATE 1 · 25m','W로 전진하여 정면의 GATE 1 중앙을 통과하십시오.'],['LEVEL 2 / 04','GATE 2 · LEFT','W로 전진하면서 A로 좌측 코스 GATE 2를 통과하십시오.'],['LEVEL 2 / 05','GATE 3 · RIGHT','W로 전진하면서 D로 우측 코스 GATE 3를 통과하십시오.'],['LEVEL 2 / 06','TURN 180° HOME','A와 D를 동시에 눌러 약 2초간 천천히 180° 선회하십시오.'],['LEVEL 2 / 07','RETURN HOME','W로 2.5D 코스를 역주행하여 HOME으로 복귀하십시오.'],['LEVEL 2 / 08','PRECISION LAND','HOME에서 ↓로 고도를 1m 이하로 낮추고 SPACE로 착륙하십시오.']],
     rings:[['RING / 01','TAKE OFF','SPACE 키로 이륙하십시오.'],['RING / 02','PASS RING 1','첫 번째 링 중심을 통과하십시오.'],['RING / 03','PASS RING 2','두 번째 링을 통과하십시오.'],['RING / 04','PASS RING 3','세 번째 링을 통과하십시오.'],['RING / 05','RETURN & LAND','착륙장으로 복귀하십시오.']],
     search:[['SEARCH / 01','TAKE OFF','수색 임무를 시작하십시오.'],['SEARCH / 02','CLIMB TO 8m','수색 고도 8m를 확보하십시오.'],['SEARCH / 03','SEARCH AREA','화면 오른쪽 수색구역을 탐색하십시오.'],['SEARCH / 04','TARGET FOUND','실종자 근처에서 3초 위치를 유지하십시오.'],['SEARCH / 05','RETURN & LAND','안전하게 복귀하십시오.']],
     wildfire:[['FIRE / 01','TAKE OFF','산불 감시 비행을 시작하십시오.'],['FIRE / 02','CLIMB TO 8m','고도 8m를 확보하십시오.'],['FIRE / 03','FIND SMOKE','연기 발생 지역으로 접근하십시오.'],['FIRE / 04','CONFIRM & REPORT','산불 지점을 3초 관측하십시오.'],['FIRE / 05','RETURN SAFE','좌표 보고 후 복귀하십시오.']],
@@ -195,10 +195,19 @@
       const d=homeDistance();
       const last=missionSets[mode].length-1;
       if(stage<last){ warn('현재 미션을 먼저 완료한 뒤 HOME에 착륙하세요'); draw(); return; }
-      if(alt<=1.2 && d<6.5){
+      const landingRadius=(mode==='hover')?12.5:6.5;
+      if(alt<=1.2 && d<landingRadius){
+        // Snap to the visible H center at the instant of a valid LEVEL 2 landing.
+        if(mode==='hover'){ x=HOME.x; y=HOME.y; }
         drone.classList.add('landing'); setMotor(.22); setTimeout(()=>{motorOff();drone.classList.remove('landing')},450); flying=false; alt=0; speed=0;
-        const bonus=Math.round(clamp(850-d*55,450,850)); addScore(bonus,'PRECISION LANDING'); finish(bonus);
-      } else warn(`HOME H 위로 복귀하고 고도 1m 이하로 낮추세요 · 거리 ${d.toFixed(1)}m`);
+        const bonus=Math.round(clamp(850-d*38,450,850)); addScore(bonus,'PRECISION LANDING'); finish(bonus);
+      } else if(alt>1.2 && d>=landingRadius){
+        warn(`H 중앙으로 더 복귀하고 ↓로 고도 1m 이하로 낮추세요 · 고도 ${alt.toFixed(1)}m · 거리 ${d.toFixed(1)}m`);
+      } else if(alt>1.2){
+        warn(`HOME 도착 · ↓로 고도를 1m 이하로 낮추세요 · 현재 ${alt.toFixed(1)}m`);
+      } else {
+        warn(`고도는 착륙 가능 (${alt.toFixed(1)}m) · H 중앙으로 조금 더 이동하세요 · 거리 ${d.toFixed(1)}m`);
+      }
     }
     draw();
   }
@@ -251,36 +260,52 @@
         if(held.right){rot+=turnRate*dt; lastMove=Date.now();}
       }
 
-      // v6.6 HOME TURN ASSIST:
-      // A/D remain lateral controls during normal flight. During the TURN 180° mission,
-      // holding either key for 0.7s starts a smooth automatic yaw toward HOME.
-      if(((mode==='basic' && stage===4) || (mode==='hover' && stage===5)) && !autoHomeTurn){
-        if(held.a || held.d){
+      // v6.9 HOME TURN:
+      // LEVEL 2: A + D together starts an unmistakable slow 180° yaw animation.
+      // LEVEL 1 keeps the previous single-key long-press assist.
+      const inTurnMission=((mode==='basic' && stage===4) || (mode==='hover' && stage===5));
+      if(inTurnMission && !autoHomeTurn){
+        if(mode==='hover' && held.a && held.d){
+          bothTurnHold += dt;
+          turnAssistHold=0;
+          if(bothTurnHold>=0.28){
+            autoHomeTurn=true; speed=0; vx=vy=0;
+            l2TurnStartRot=rot;
+            // Force a visible half-turn, then finish exactly facing HOME.
+            l2TurnTargetRot=rot+180;
+            flashComplete('180° HOME TURN');
+          }
+        } else if(mode==='basic' && (held.a || held.d)){
           turnAssistHold += dt;
           if(turnAssistHold>=0.70){
-            autoHomeTurn=true;
-            autoTurnDir=held.a?-1:1;
-            speed=0; vx=vy=0;
+            autoHomeTurn=true; autoTurnDir=held.a?-1:1; speed=0; vx=vy=0;
             flashComplete('HOME TURN ASSIST');
           }
-        } else turnAssistHold=0;
-      } else if(!((mode==='basic' && stage===4) || (mode==='hover' && stage===5))){
-        turnAssistHold=0;
-        autoHomeTurn=false;
+        } else { bothTurnHold=0; turnAssistHold=0; }
+      } else if(!inTurnMission){
+        bothTurnHold=0; turnAssistHold=0; autoHomeTurn=false;
       }
 
-      if(autoHomeTurn && ((mode==='basic' && stage===4) || (mode==='hover' && stage===5))){
-        const targetH=homeHeading();
-        let delta=angleDelta(targetH,rot);
-        // honor the chosen A/D direction for the visual 180° sweep when both paths are equivalent
-        if(Math.abs(Math.abs(delta)-180)<4) delta=180*autoTurnDir;
-        const step=Math.sign(delta)*Math.min(Math.abs(delta),145*dt);
-        rot+=step;
-        tiltX*=.82; tiltY*=.82;
-        setMotor(.58,.08); lastMove=Date.now();
-        if(Math.abs(angleDelta(targetH,rot))<2.5){
-          rot=targetH; autoHomeTurn=false; turnAssistHold=0;
-          addScore(350,'HOME 180° TURN'); setMission(mode==='basic'?5:6);
+      if(autoHomeTurn && inTurnMission){
+        if(mode==='hover'){
+          // ~2.1 sec for a full visible 180° turn.
+          const remain=l2TurnTargetRot-rot;
+          const step=Math.sign(remain)*Math.min(Math.abs(remain),86*dt);
+          rot+=step; tiltX*=.80; tiltY*=.80; setMotor(.58,.08); lastMove=Date.now();
+          if(Math.abs(remain)<2.2){
+            rot=homeHeading(); autoHomeTurn=false; bothTurnHold=0;
+            addScore(400,'HOME 180° TURN'); flashComplete('TURN COMPLETE'); setMission(6);
+          }
+        } else {
+          const targetH=homeHeading();
+          let delta=angleDelta(targetH,rot);
+          if(Math.abs(Math.abs(delta)-180)<4) delta=180*autoTurnDir;
+          const step=Math.sign(delta)*Math.min(Math.abs(delta),145*dt);
+          rot+=step; tiltX*=.82; tiltY*=.82; setMotor(.58,.08); lastMove=Date.now();
+          if(Math.abs(angleDelta(targetH,rot))<2.5){
+            rot=targetH; autoHomeTurn=false; turnAssistHold=0;
+            addScore(350,'HOME 180° TURN'); setMission(5);
+          }
         }
       }
 
@@ -289,7 +314,7 @@
       if(held.w)forward+=1; if(held.s)forward-=1;
       if(!autoHomeTurn){ if(held.d)strafe+=1; if(held.a)strafe-=1; }
       // suppress lateral drift once A/D has clearly become a long-press turn command
-      if(((mode==='basic' && stage===4) || (mode==='hover' && stage===5)) && turnAssistHold>.28) strafe=0;
+      if(((mode==='basic' && stage===4) || (mode==='hover' && stage===5)) && (turnAssistHold>.28 || (held.a&&held.d))) strafe=0;
       const commanded=!autoHomeTurn && Math.hypot(forward,strafe)>0;
       const targetSpeed=commanded?6.4:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
@@ -370,20 +395,21 @@
         const gateCenterY=65;
         const verticalError=Math.abs(droneScreenY-gateCenterY);
         text.textContent=`${gi+1}번 게이트 · 좌우 오차 ${dx.toFixed(1)}m · 높이 오차 ${verticalError.toFixed(1)} · 전방 ${forward.toFixed(0)}m`;
-        // v6.8: pass only when the aircraft truly reaches the gate plane AND is visually inside the opening.
+        // v6.9: pass only when the aircraft truly reaches the gate plane AND is visually inside the opening.
         if(Math.abs(y-g.y)<2.8 && dx<5.0 && verticalError<8.5){
           addScore(500+gi*75,`GATE ${gi+1} PASS`); flashComplete(`GATE ${gi+1} PASS`); setMission(stage+1);
         }
       }
       if(stage===5){
         const h=((rot%360)+360)%360, towardHome=homeHeading(), err=Math.abs(angleDelta(towardHome,h));
-        const assist=Math.min(.7,turnAssistHold);
-        text.textContent=autoHomeTurn?`HOME 자동 선회 중 · 방향 오차 ${err.toFixed(0)}°`:`A/D 길게 = HOME 180° 선회 (${assist.toFixed(1)}/0.7초) · 오차 ${err.toFixed(0)}°`;
-        if(!autoHomeTurn&&err<18){ addScore(400,'TURN COMPLETE'); setMission(6); turnAssistHold=0; }
+        const combo=Math.min(.28,bothTurnHold);
+        text.textContent=autoHomeTurn
+          ? `180° 선회 중… 기체가 HOME 방향으로 천천히 회전합니다.`
+          : `A + D를 동시에 누르세요 · 180° 선회 시작 (${combo.toFixed(2)}/0.28초)`;
       }
       if(stage===6){
         const d=homeDistance(); text.textContent=`HOME까지 ${d.toFixed(1)}m · W로 코스를 따라 복귀하십시오.`;
-        if(d<9){ addScore(550,'RETURN HOME'); setMission(7); }
+        if(d<12.5){ x += (HOME.x-x)*.70; y += (HOME.y-y)*.70; addScore(550,'RETURN HOME'); setMission(7); }
       }
     }
     if(mode==='rings'&&flying){ const pts=[[29,52],[57,42],[80,60]]; if(stage===1&&alt>=4){} if(stage>=1&&stage<=3){const idx=stage-1;if(targetDistance(...pts[idx])<7){rings[idx].classList.add('passed');addScore(450,`RING ${idx+1}`);setMission(stage+1)}} }
