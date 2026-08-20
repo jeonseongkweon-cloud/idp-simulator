@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020711">
-  <title>IDP Drone Simulator v6.6</title>
+  <title>IDP Drone Simulator v6.7</title>
   <link rel="icon" href="assets/img/idp-logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
 
@@ -14,6 +14,26 @@
     .developer-credit::after{background:linear-gradient(90deg,#d7b45a,transparent)}
     .developer-credit b{font-size:14px;letter-spacing:.08em;color:#f6d77d;text-shadow:0 0 14px rgba(246,215,125,.22)}
     .developer-credit .ko{font-size:11px;letter-spacing:.08em;color:#9bb7c9;text-transform:none}
+
+    /* ===== v6.7 LEVEL 2 · 2.5D GATE FLIGHT ===== */
+    .level2-scene{position:absolute;inset:0;display:none;overflow:hidden;pointer-events:none;z-index:2;perspective:760px;transform-style:preserve-3d}
+    .simulator-view.level2-25d .level2-scene{display:block}
+    .simulator-view.level2-25d .outbound-gate,.simulator-view.level2-25d .hover-zone{display:none!important}
+    .simulator-view.level2-25d .outdoor-photo-layer{filter:saturate(1.08) contrast(1.06) brightness(.82)}
+    .l2-horizon-glow{position:absolute;left:0;right:0;top:27%;height:22%;background:radial-gradient(ellipse at 50% 50%,rgba(57,214,255,.22),transparent 68%);mix-blend-mode:screen}
+    .l2-ground-plane{position:absolute;left:-24%;right:-24%;top:48%;bottom:-38%;transform-origin:50% 0;transform:rotateX(62deg);background:linear-gradient(90deg,transparent 0 16%,rgba(31,214,255,.14) 16.2%,transparent 16.5% 32%,rgba(31,214,255,.11) 32.2%,transparent 32.5% 50%,rgba(255,211,78,.25) 50.2%,transparent 50.5% 68%,rgba(31,214,255,.11) 68.2%,transparent 68.5% 84%,rgba(31,214,255,.14) 84.2%,transparent 84.5%),repeating-linear-gradient(0deg,rgba(44,220,255,.22) 0 2px,transparent 2px 52px);opacity:.72;filter:drop-shadow(0 0 8px rgba(39,217,255,.22))}
+    .l2-ground-plane i{position:absolute;left:49.7%;top:0;bottom:0;width:3px;background:linear-gradient(#ffe26c,#e7a62322);box-shadow:0 0 14px #ffc84a}
+    .l2-edge{position:absolute;top:44%;bottom:-10%;width:3px;opacity:.7;transform-origin:top;background:linear-gradient(#50eaff,#22bdfd11);box-shadow:0 0 10px #2bdaff}
+    .l2-edge-left{left:32%;transform:rotate(14deg)}.l2-edge-right{right:32%;transform:rotate(-14deg)}
+    .l2-speed-markers{position:absolute;inset:0;opacity:.55;background:repeating-linear-gradient(100deg,transparent 0 16%,rgba(104,227,255,.12) 16.2%,transparent 16.7% 32%);mix-blend-mode:screen}
+    .l2-gate{position:absolute;left:50%;top:45%;width:180px;height:112px;margin:-56px 0 0 -90px;border:8px solid #ffd24f;border-bottom-width:10px;border-radius:10px 10px 4px 4px;box-shadow:0 0 22px #ffc02d, inset 0 0 24px #ffc02d33;transform-origin:50% 50%;opacity:0;will-change:transform,left,top,opacity;z-index:4}
+    .l2-gate::before,.l2-gate::after{content:"";position:absolute;top:-12px;width:18px;height:136px;background:linear-gradient(#ffe679,#a96c06);border:2px solid #ffdb5e;box-shadow:0 0 13px #ffbb23}
+    .l2-gate::before{left:-17px}.l2-gate::after{right:-17px}
+    .l2-gate b{position:absolute;left:50%;top:-35px;transform:translateX(-50%);white-space:nowrap;color:#fff3b7;font-size:13px;letter-spacing:.12em;text-shadow:0 0 12px #ffbd29}
+    .l2-gate span{position:absolute;left:50%;bottom:-31px;transform:translateX(-50%);padding:3px 9px;border:1px solid #55e7ff;border-radius:999px;background:#03121ddd;color:#7eeaff;font-size:9px;letter-spacing:.12em}
+    .l2-gate.active{border-color:#60f5bd;box-shadow:0 0 35px #37efad,inset 0 0 25px #37efad33}.l2-gate.passed{border-color:#6ff4ff;filter:saturate(.45);opacity:.22!important}
+    .l2-course-hud{position:absolute;right:18px;bottom:18px;display:grid;gap:2px;padding:9px 12px;border:1px solid #46dfff88;border-radius:8px;background:#03111dcc;backdrop-filter:blur(6px);z-index:7;text-align:right}.l2-course-hud span{font-size:8px;letter-spacing:.17em;color:#8bbacb}.l2-course-hud b{font-size:12px;color:#7ff1ff}
+    .simulator-view.level2-25d .ground-grid{opacity:.24}.simulator-view.level2-25d .landing-pad{opacity:.42}
   </style>
 </head>
 <body>
@@ -22,10 +42,10 @@
     <div class="boot-card">
       <img src="assets/img/idp-logo-circle.png" class="boot-logo" alt="IDP">
       <p class="micro">INTERNATIONAL DRONE PATROL</p>
-      <h1>IDP DRONE SIMULATOR <span class="vtag">v6.6</span></h1>
+      <h1>IDP DRONE SIMULATOR <span class="vtag">v6.7</span></h1>
       <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
       <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
-      <small>v6.6 · 2.5D Gate Flight / Return-to-Home / Precision Landing</small>
+      <small>v6.7 · 2.5D Gate Flight / Return-to-Home / Precision Landing</small>
       <div class="developer-credit"><span>DEVELOPER</span><b>JEONSEONG KWEON</b><span class="ko">전성권</span></div>
     </div>
   </div>
@@ -33,7 +53,7 @@
   <header class="topbar">
     <a class="brand" href="#home">
       <img src="assets/img/idp-logo.png" alt="">
-      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v6.6</small></span>
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v6.7</small></span>
     </a>
     <nav>
       <a href="#training">TRAINING</a>
@@ -85,7 +105,7 @@
         </article>
         <article class="level-card tier-basic locked" data-level="2" data-mode="hover">
           <div class="level-top"><span>LEVEL 02</span><em class="lock-state">🔒 LOCK</em></div>
-          <div class="level-icon">🎯</div><h4>호버링 시험</h4><p>지정 구역에서 10초 정지비행</p>
+          <div class="level-icon">🌀</div><h4>2.5D 게이트 비행</h4><p>원근 코스 · 3개 게이트 · 좌우 기동</p>
           <button class="level-start">LEVEL 1 통과 필요</button>
         </article>
         <article class="level-card tier-basic locked" data-level="3" data-mode="rings">
@@ -191,7 +211,7 @@
   <section id="simulatorView" class="simulator-view">
     <div class="sim-bg"></div>
     <div class="hud-top">
-      <div class="sim-mode-id"><div><b id="modeTitle">IDP / LEVEL 1</b><span id="modeSubtitle">BASIC FLIGHT TRAINING</span></div><em class="sim-version">v6.6</em></div>
+      <div class="sim-mode-id"><div><b id="modeTitle">IDP / LEVEL 1</b><span id="modeSubtitle">BASIC FLIGHT TRAINING</span></div><em class="sim-version">v6.7</em></div>
       <div class="telemetry">
         <span>ALT <b id="alt">0.0</b> m</span><span>SPD <b id="spd">0.0</b> m/s</span><span>DIST <b id="depthHud">0</b> m</span>
         <span>HDG <b id="hdg">000</b>°</span><span>SCORE <b id="score">0000</b></span>
@@ -212,6 +232,16 @@
       <div class="outdoor-photo-layer" id="outdoorPhoto"></div>
       <div class="outdoor-depth depth-far" id="depthFar"></div>
       <div class="outdoor-depth depth-near" id="depthNear"></div>
+      <div id="level2Scene" class="level2-scene" aria-hidden="true">
+        <div class="l2-horizon-glow"></div>
+        <div class="l2-ground-plane"><i></i></div>
+        <div class="l2-edge l2-edge-left"></div><div class="l2-edge l2-edge-right"></div>
+        <div class="l2-speed-markers" id="l2Markers"></div>
+        <div class="l2-gate l2-gate-1" id="l2Gate1"><b>GATE 1</b><span>25m</span></div>
+        <div class="l2-gate l2-gate-2" id="l2Gate2"><b>GATE 2</b><span>LEFT</span></div>
+        <div class="l2-gate l2-gate-3" id="l2Gate3"><b>GATE 3</b><span>RIGHT</span></div>
+        <div class="l2-course-hud"><span>2.5D COURSE</span><b id="l2CourseStatus">READY</b></div>
+      </div>
       <div class="sky-glow"></div>
       <div class="mountains legacy-mountains"></div>
       <div class="ground-grid"></div>

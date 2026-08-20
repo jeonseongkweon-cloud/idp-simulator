@@ -9,11 +9,13 @@
   const disasterMarker=$('#disasterMarker'), patrolPoints=[$('#patrolPoint1'),$('#patrolPoint2'),$('#patrolPoint3')], masterCore=$('#masterCore');
   const landingPad=document.querySelector('.landing-pad'), outdoorPhoto=$('#outdoorPhoto'), groundGrid=document.querySelector('.ground-grid'), groundShadow=$('#groundShadow');
   const outboundGate=$('#outboundGate'), homeBeacon=$('#homeBeacon'), flightTrail=$('#flightTrail');
+  const level2Scene=$('#level2Scene'), l2Gates=[$('#l2Gate1'),$('#l2Gate2'),$('#l2Gate3')], l2Status=$('#l2CourseStatus'), l2Markers=$('#l2Markers');
 
   const HOME={x:42.5,y:82};
   // LEVEL 1 photo alignment: center of the real yellow 25m gate in the background image.
   const GATE={x:42.5,y:31};
   const TURN={x:42.5,y:8};
+  const L2_GATES=[{x:42.5,y:60},{x:28,y:35},{x:61,y:10}];
   let x=HOME.x,y=HOME.y,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode='basic',battery=100,completeShown=false;
   let vx=0,vy=0,speed=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,currentLevel=1;
   let motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0;
@@ -50,8 +52,38 @@
   const homeDistance=()=>Math.hypot((x-HOME.x)*1.15, y-HOME.y);
   function nowTime(){ const sec=Math.floor((Date.now()-start)/1000); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
 
+  function updateLevel2Scene(){
+    if(!level2Scene || mode!=='hover') return;
+    const courseDepth=Math.max(0,HOME.y-y);
+    if(l2Markers){
+      const shift=(courseDepth*28)%180;
+      l2Markers.style.transform=`translateY(${shift}px)`;
+    }
+    l2Gates.forEach((g,i)=>{
+      if(!g)return;
+      const w=L2_GATES[i];
+      const ahead=y-w.y; // + ahead, 0 at gate, - passed
+      let progress=1-clamp(ahead/62,0,1);
+      let top=31+progress*34;
+      let scale=.34+progress*1.05;
+      let opacity=clamp(.25+progress*1.0,0,1);
+      if(ahead<0){ top=66+Math.min(28,Math.abs(ahead)*2.1); scale=1.40+Math.min(.55,Math.abs(ahead)*.025); opacity=clamp(1-Math.abs(ahead)/12,0,.75); }
+      const lateral=50+(w.x-x)*1.55;
+      g.style.left=lateral+'%'; g.style.top=top+'%'; g.style.opacity=opacity;
+      g.style.transform=`translate(-50%,-50%) scale(${scale})`;
+      const activeIndex=stage>=2 && stage<=4 ? stage-2 : -1;
+      g.classList.toggle('active',i===activeIndex);
+      g.classList.toggle('passed',i<activeIndex || (stage>=5));
+    });
+    if(l2Status){
+      const names=['READY','CLIMB','GATE 1','GATE 2 · LEFT','GATE 3 · RIGHT','TURN HOME','RETURN HOME','LAND'];
+      l2Status.textContent=names[Math.min(stage,names.length-1)] || 'FLIGHT';
+    }
+  }
+
   function draw(){
     const d=homeDistance();
+    updateLevel2Scene();
     // v6.2: DEPTH (forward/back) and ALTITUDE are rendered separately.
     // Forward travel moves toward the 25m gate with strong perspective/parallax,
     // while altitude moves the aircraft vertically above its ground track.
@@ -61,7 +93,7 @@
     const screenY=clamp(depthScreenY-altitudeLift,3,89);
     const perspective=(mode==='basic')
       ? clamp(1.10-depthTravel*0.0046,0.48,1.10)
-      : clamp(1.04-depthTravel*0.0048,0.78,1.10);
+      : (mode==='hover' ? clamp(1.12-depthTravel*0.0062,0.52,1.12) : clamp(1.04-depthTravel*0.0048,0.78,1.10));
     drone.style.left=x+'%'; drone.style.top=screenY+'%';
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
     if(groundShadow){
@@ -76,9 +108,9 @@
     flightArea.classList.toggle('outdoor-moving',flying&&speed>.7);
 
     if(outdoorPhoto){
-      const parX=(HOME.x-x)*2.0;
-      const parY=(mode==='basic' ? depthTravel*.32 : (HOME.y-y)*1.2);
-      const zoom=(mode==='basic') ? 1.025+Math.min(depthTravel,115)*.00315 : 1.035+Math.min(d,55)*.0015;
+      const parX=(HOME.x-x)*(mode==='hover'?4.2:2.0);
+      const parY=(mode==='basic' ? depthTravel*.32 : (mode==='hover' ? depthTravel*.75 : (HOME.y-y)*1.2));
+      const zoom=(mode==='basic') ? 1.025+Math.min(depthTravel,115)*.00315 : (mode==='hover' ? 1.02+Math.min(depthTravel,120)*.0048 : 1.035+Math.min(d,55)*.0015);
       outdoorPhoto.style.transform=`translate(${parX}px,${parY}px) scale(${zoom})`;
     }
     if(groundGrid) groundGrid.style.backgroundPosition=`${(x-HOME.x)*9}px ${(HOME.y-y)*12}px, ${(HOME.y-y)*7}px ${(x-HOME.x)*5}px`;
@@ -102,7 +134,7 @@
   function resetEnv(){
     wildfire.classList.remove('show'); target.classList.remove('show'); hoverZone.classList.remove('show'); rings.forEach(r=>r.classList.remove('show','passed'));
     missingPerson.classList.remove('show'); coordBox.classList.remove('show'); nightBeacon.classList.remove('show'); disasterMarker.classList.remove('show'); patrolPoints.forEach(p=>{p.classList.remove('show');p.style.opacity=''}); masterCore.classList.remove('show');
-    view.classList.remove('night-mode','search-mode'); flightArea.classList.remove('outdoor-moving','speeding'); outboundGate?.classList.remove('show','reached'); homeBeacon?.classList.remove('show');
+    view.classList.remove('night-mode','search-mode','level2-25d'); flightArea.classList.remove('outdoor-moving','speeding'); outboundGate?.classList.remove('show','reached'); homeBeacon?.classList.remove('show');
   }
   function resetCommon(){
     x=HOME.x; y=HOME.y; rot=0; alt=0; score=0; flying=false; paused=false; start=Date.now(); lastMove=0; battery=100; completeShown=false;
@@ -119,7 +151,7 @@
       ['MISSION 06','RETURN HOME','W 키로 HOME 착륙장까지 직접 복귀하십시오.'],
       ['MISSION 07','PRECISION LAND','H 위에서 고도 1m 이하로 낮춘 뒤 SPACE로 착륙하십시오.']
     ],
-    hover:[['LEVEL 2 / 01','TAKE OFF','SPACE 키로 이륙하십시오.'],['LEVEL 2 / 02','CLIMB TO 6m','고도 6m까지 상승하십시오.'],['LEVEL 2 / 03','ENTER HOVER ZONE','중앙 HOVER ZONE 안으로 이동하십시오.'],['LEVEL 2 / 04','HOLD 10 SECONDS','10초 정지비행을 유지하십시오.'],['LEVEL 2 / 05','LAND','착륙장으로 복귀해 착륙하십시오.']],
+    hover:[['LEVEL 2 / 01','TAKE OFF','SPACE 키로 이륙하여 2.5D 게이트 코스를 시작하십시오.'],['LEVEL 2 / 02','CLIMB TO 8m','↑ 키로 고도 8m 이상을 확보하십시오.'],['LEVEL 2 / 03','GATE 1 · 25m','W로 전진하여 정면의 GATE 1 중앙을 통과하십시오.'],['LEVEL 2 / 04','GATE 2 · LEFT','W로 전진하면서 A로 좌측 코스 GATE 2를 통과하십시오.'],['LEVEL 2 / 05','GATE 3 · RIGHT','W로 전진하면서 D로 우측 코스 GATE 3를 통과하십시오.'],['LEVEL 2 / 06','TURN 180° HOME','A 또는 D를 길게 눌러 HOME 방향 자동 180° 선회를 실행하십시오.'],['LEVEL 2 / 07','RETURN HOME','W로 2.5D 코스를 역주행하여 HOME으로 복귀하십시오.'],['LEVEL 2 / 08','PRECISION LAND','HOME에서 ↓로 고도를 1m 이하로 낮추고 SPACE로 착륙하십시오.']],
     rings:[['RING / 01','TAKE OFF','SPACE 키로 이륙하십시오.'],['RING / 02','PASS RING 1','첫 번째 링 중심을 통과하십시오.'],['RING / 03','PASS RING 2','두 번째 링을 통과하십시오.'],['RING / 04','PASS RING 3','세 번째 링을 통과하십시오.'],['RING / 05','RETURN & LAND','착륙장으로 복귀하십시오.']],
     search:[['SEARCH / 01','TAKE OFF','수색 임무를 시작하십시오.'],['SEARCH / 02','CLIMB TO 8m','수색 고도 8m를 확보하십시오.'],['SEARCH / 03','SEARCH AREA','화면 오른쪽 수색구역을 탐색하십시오.'],['SEARCH / 04','TARGET FOUND','실종자 근처에서 3초 위치를 유지하십시오.'],['SEARCH / 05','RETURN & LAND','안전하게 복귀하십시오.']],
     wildfire:[['FIRE / 01','TAKE OFF','산불 감시 비행을 시작하십시오.'],['FIRE / 02','CLIMB TO 8m','고도 8m를 확보하십시오.'],['FIRE / 03','FIND SMOKE','연기 발생 지역으로 접근하십시오.'],['FIRE / 04','CONFIRM & REPORT','산불 지점을 3초 관측하십시오.'],['FIRE / 05','RETURN SAFE','좌표 보고 후 복귀하십시오.']],
@@ -132,10 +164,10 @@
 
   function setMission(i){ stage=i; const m=missionSets[mode][i]; if(!m)return; missionNo.textContent=m[0]; title.textContent=m[1]; text.textContent=m[2]; }
   function setupMode(){
-    const labels={basic:['IDP / LEVEL 1','2.5D OUTBOUND · TURN · RETURN'],hover:['IDP / LEVEL 2','HOVERING TEST'],rings:['IDP / OBSTACLE','RING COURSE'],search:['IDP / SEARCH','MISSING PERSON SEARCH'],wildfire:['IDP / WILDFIRE','COORDINATE REPORT MISSION'],night:['IDP / LEVEL 6','NIGHT FLIGHT'],disaster:['IDP / LEVEL 7','DISASTER RECON'],patrol:['IDP / LEVEL 8','SAFETY PATROL'],rescue:['IDP / LEVEL 9','INTEGRATED RESCUE & PATROL'],master:['IDP / LEVEL 10','MASTER CHALLENGE']};
+    const labels={basic:['IDP / LEVEL 1','2.5D OUTBOUND · TURN · RETURN'],hover:['IDP / LEVEL 2','2.5D GATE FLIGHT · PARALLAX COURSE'],rings:['IDP / OBSTACLE','RING COURSE'],search:['IDP / SEARCH','MISSING PERSON SEARCH'],wildfire:['IDP / WILDFIRE','COORDINATE REPORT MISSION'],night:['IDP / LEVEL 6','NIGHT FLIGHT'],disaster:['IDP / LEVEL 7','DISASTER RECON'],patrol:['IDP / LEVEL 8','SAFETY PATROL'],rescue:['IDP / LEVEL 9','INTEGRATED RESCUE & PATROL'],master:['IDP / LEVEL 10','MASTER CHALLENGE']};
     $('#modeTitle').textContent=labels[mode][0]; $('#modeSubtitle').textContent=labels[mode][1];
     if(mode==='basic') outboundGate?.classList.add('show');
-    if(mode==='hover') hoverZone.classList.add('show');
+    if(mode==='hover'){ view.classList.add('level2-25d'); if(l2Status)l2Status.textContent='READY'; }
     if(mode==='rings') rings.forEach(r=>r.classList.add('show'));
     if(mode==='search'){view.classList.add('search-mode');missingPerson.classList.add('show')}
     if(mode==='wildfire'){wildfire.classList.add('show');target.classList.add('show')}
@@ -214,7 +246,7 @@
       // v6.6 HOME TURN ASSIST:
       // A/D remain lateral controls during normal flight. During the TURN 180° mission,
       // holding either key for 0.7s starts a smooth automatic yaw toward HOME.
-      if(mode==='basic' && stage===4 && !autoHomeTurn){
+      if(((mode==='basic' && stage===4) || (mode==='hover' && stage===5)) && !autoHomeTurn){
         if(held.a || held.d){
           turnAssistHold += dt;
           if(turnAssistHold>=0.70){
@@ -224,12 +256,12 @@
             flashComplete('HOME TURN ASSIST');
           }
         } else turnAssistHold=0;
-      } else if(stage!==4){
+      } else if(!((mode==='basic' && stage===4) || (mode==='hover' && stage===5))){
         turnAssistHold=0;
         autoHomeTurn=false;
       }
 
-      if(autoHomeTurn && mode==='basic' && stage===4){
+      if(autoHomeTurn && ((mode==='basic' && stage===4) || (mode==='hover' && stage===5))){
         const targetH=homeHeading();
         let delta=angleDelta(targetH,rot);
         // honor the chosen A/D direction for the visual 180° sweep when both paths are equivalent
@@ -240,7 +272,7 @@
         setMotor(.58,.08); lastMove=Date.now();
         if(Math.abs(angleDelta(targetH,rot))<2.5){
           rot=targetH; autoHomeTurn=false; turnAssistHold=0;
-          addScore(350,'HOME 180° TURN'); setMission(5);
+          addScore(350,'HOME 180° TURN'); setMission(mode==='basic'?5:6);
         }
       }
 
@@ -249,7 +281,7 @@
       if(held.w)forward+=1; if(held.s)forward-=1;
       if(!autoHomeTurn){ if(held.d)strafe+=1; if(held.a)strafe-=1; }
       // suppress lateral drift once A/D has clearly become a long-press turn command
-      if(mode==='basic' && stage===4 && turnAssistHold>.28) strafe=0;
+      if(((mode==='basic' && stage===4) || (mode==='hover' && stage===5)) && turnAssistHold>.28) strafe=0;
       const commanded=!autoHomeTurn && Math.hypot(forward,strafe)>0;
       const targetSpeed=commanded?6.4:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
@@ -266,6 +298,12 @@
         if(mode==='basic' && held.w && Math.abs(strafe)<0.01){
           const tx=stage<=3 ? GATE.x : (stage>=5 ? HOME.x : x);
           x += (tx-x)*Math.min(1,dt*0.62);
+        }
+        // LEVEL 2 keeps light assistance only near the center of each gate.
+        if(mode==='hover' && held.w){
+          const gi=stage>=2&&stage<=4?stage-2:-1;
+          if(gi>=0 && Math.abs(x-L2_GATES[gi].x)<10) x += (L2_GATES[gi].x-x)*Math.min(1,dt*.35);
+          if(stage>=6 && Math.abs(x-HOME.x)<12) x += (HOME.x-x)*Math.min(1,dt*.32);
         }
         vx=dx/dt; vy=dy/dt; lastMove=Date.now();
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
@@ -314,9 +352,23 @@
     timerEl.textContent=nowTime(); if(paused)return;
     if(flying){battery=Math.max(0,battery-.018);if(battery<15&&Math.random()<.08)warn('LOW BATTERY')}
     if(mode==='hover'&&flying){
-      if(stage===1&&alt>=6){addScore(300,'ALTITUDE');setMission(2)}
-      const d=targetDistance(50,54); if(stage===2&&d<8&&Math.abs(alt-6)<2){addScore(400,'ZONE ENTERED');setMission(3);hold=0}
-      if(stage===3){const stable=d<8&&Math.abs(alt-6)<2&&speed<.7;if(stable){hold+=.25;text.textContent=`정지비행 ${Math.min(10,hold).toFixed(1)} / 10.0초`;if(hold>=10){addScore(800,'HOVER PASS');setMission(4)}}else hold=Math.max(0,hold-.5)}
+      if(stage===1&&alt>=8){ addScore(300,'ALTITUDE 8m'); setMission(2); }
+      if(stage>=2&&stage<=4){
+        const gi=stage-2, g=L2_GATES[gi];
+        const dx=Math.abs(x-g.x), dy=Math.abs(y-g.y);
+        text.textContent=`${gi+1}번 게이트 · 좌우 오차 ${dx.toFixed(1)}m · 전방 ${Math.max(0,y-g.y).toFixed(0)}m`;
+        if(dy<4.8 && dx<8.5){ addScore(500+gi*75,`GATE ${gi+1} PASS`); setMission(stage+1); }
+      }
+      if(stage===5){
+        const h=((rot%360)+360)%360, towardHome=homeHeading(), err=Math.abs(angleDelta(towardHome,h));
+        const assist=Math.min(.7,turnAssistHold);
+        text.textContent=autoHomeTurn?`HOME 자동 선회 중 · 방향 오차 ${err.toFixed(0)}°`:`A/D 길게 = HOME 180° 선회 (${assist.toFixed(1)}/0.7초) · 오차 ${err.toFixed(0)}°`;
+        if(!autoHomeTurn&&err<18){ addScore(400,'TURN COMPLETE'); setMission(6); turnAssistHold=0; }
+      }
+      if(stage===6){
+        const d=homeDistance(); text.textContent=`HOME까지 ${d.toFixed(1)}m · W로 코스를 따라 복귀하십시오.`;
+        if(d<9){ addScore(550,'RETURN HOME'); setMission(7); }
+      }
     }
     if(mode==='rings'&&flying){ const pts=[[29,52],[57,42],[80,60]]; if(stage===1&&alt>=4){} if(stage>=1&&stage<=3){const idx=stage-1;if(targetDistance(...pts[idx])<7){rings[idx].classList.add('passed');addScore(450,`RING ${idx+1}`);setMission(stage+1)}} }
     if(mode==='search'&&flying){ if(stage===1&&alt>=8){addScore(300,'ALTITUDE');setMission(2)} const d=targetDistance(84,72); if(stage===2&&d<14){addScore(500,'PERSON FOUND');setMission(3);hold=0} if(stage===3){if(d<12){hold+=.25;text.textContent=`실종자 위치 확인 ${Math.min(3,hold).toFixed(1)} / 3.0초`;if(hold>=3){addScore(650,'LOCATION CONFIRMED');setMission(4)}}else hold=0} }
@@ -331,10 +383,10 @@
 
   function finish(landingBonus){
     if(completeShown)return; completeShown=true; const sec=Math.floor((Date.now()-start)/1000),timeBonus=Math.round(clamp(500-sec*4,100,500)); score+=timeBonus;
-    const maxByMode={basic:3000,hover:2200,rings:2500,search:2700,wildfire:2750,night:2500,disaster:2600,patrol:2650,rescue:2900,master:3300};
+    const maxByMode={basic:3000,hover:3900,rings:2500,search:2700,wildfire:2750,night:2500,disaster:2600,patrol:2650,rescue:2900,master:3300};
     const ratio=score/maxByMode[mode],stars=ratio>=.82?3:ratio>=.62?2:1;
-    const titles={basic:'LEVEL 1 COMPLETE',hover:'LEVEL 2 HOVERING PASS',rings:'LEVEL 3 RING COURSE COMPLETE',search:'LEVEL 4 SEARCH COMPLETE',wildfire:'LEVEL 5 WILDFIRE REPORT COMPLETE',night:'LEVEL 6 NIGHT FLIGHT COMPLETE',disaster:'LEVEL 7 DISASTER RECON COMPLETE',patrol:'LEVEL 8 PATROL COMPLETE',rescue:'LEVEL 9 INTEGRATED MISSION COMPLETE',master:'IDP MASTER CHALLENGE COMPLETE'};
-    const messages={basic:`이륙 → ${maxHomeDistance.toFixed(0)}m 전진 → 180° 선회 → HOME 복귀 → 정밀착륙을 완료했습니다.`,hover:'10초 정지비행과 착륙 시험을 완료했습니다.',rings:'장애물 링 코스를 완료했습니다.',search:'실종자 위치 확인 임무를 완료했습니다.',wildfire:'산불 좌표 보고 임무를 완료했습니다.',night:'야간 비행 임무를 완료했습니다.',disaster:'재난지역 정찰 임무를 완료했습니다.',patrol:'안전 순찰 임무를 완료했습니다.',rescue:'종합 구조·순찰 임무를 완료했습니다.',master:'MASTER CHALLENGE를 완료했습니다.'};
+    const titles={basic:'LEVEL 1 COMPLETE',hover:'LEVEL 2 · 2.5D GATE FLIGHT COMPLETE',rings:'LEVEL 3 RING COURSE COMPLETE',search:'LEVEL 4 SEARCH COMPLETE',wildfire:'LEVEL 5 WILDFIRE REPORT COMPLETE',night:'LEVEL 6 NIGHT FLIGHT COMPLETE',disaster:'LEVEL 7 DISASTER RECON COMPLETE',patrol:'LEVEL 8 PATROL COMPLETE',rescue:'LEVEL 9 INTEGRATED MISSION COMPLETE',master:'IDP MASTER CHALLENGE COMPLETE'};
+    const messages={basic:`이륙 → ${maxHomeDistance.toFixed(0)}m 전진 → 180° 선회 → HOME 복귀 → 정밀착륙을 완료했습니다.`,hover:'2.5D 원근 코스에서 3개 게이트 통과 · 180° 선회 · HOME 복귀를 완료했습니다.',rings:'장애물 링 코스를 완료했습니다.',search:'실종자 위치 확인 임무를 완료했습니다.',wildfire:'산불 좌표 보고 임무를 완료했습니다.',night:'야간 비행 임무를 완료했습니다.',disaster:'재난지역 정찰 임무를 완료했습니다.',patrol:'안전 순찰 임무를 완료했습니다.',rescue:'종합 구조·순찰 임무를 완료했습니다.',master:'MASTER CHALLENGE를 완료했습니다.'};
     $('#completeTitle').textContent=titles[mode]; $('#stars').textContent='★'.repeat(stars)+'☆'.repeat(3-stars); $('#finalScore').textContent=Math.round(score); $('#finalTime').textContent=nowTime(); $('#landingQuality').textContent=landingBonus>=750?'S':landingBonus>=600?'A':'B'; $('#completeMessage').textContent=messages[mode];
     window.IDPProgress?.unlockNext(currentLevel); setTimeout(()=>$('#completeModal').classList.add('open'),650); window.IDPTone?.(880,.4);
   }
