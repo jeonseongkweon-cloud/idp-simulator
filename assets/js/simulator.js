@@ -68,7 +68,7 @@
       let scale=.34+progress*1.05;
       let opacity=clamp(.25+progress*1.0,0,1);
       if(ahead<0){ top=66+Math.min(28,Math.abs(ahead)*2.1); scale=1.40+Math.min(.55,Math.abs(ahead)*.025); opacity=clamp(1-Math.abs(ahead)/12,0,.75); }
-      const lateral=50+(w.x-x)*1.55;
+      const lateral=w.x; // v6.8: world X now matches screen X so visual centering = numeric centering
       g.style.left=lateral+'%'; g.style.top=top+'%'; g.style.opacity=opacity;
       g.style.transform=`translate(-50%,-50%) scale(${scale})`;
       const activeIndex=stage>=2 && stage<=4 ? stage-2 : -1;
@@ -89,13 +89,21 @@
     // while altitude moves the aircraft vertically above its ground track.
     const altitudeLift=alt*0.72;
     const depthTravel=Math.max(0,HOME.y-y);
-    const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.36 : y;
-    const screenY=clamp(depthScreenY-altitudeLift,3,89);
+    // v6.8: LEVEL 2 uses a camera-relative aircraft position.
+    // Forward/back travel is shown by gates/ground/background moving, not by the aircraft climbing into the mountains.
+    const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.36 : (mode==='hover' ? 69 : y);
+    const hoverLift=(mode==='hover') ? alt*0.74 : altitudeLift;
+    const screenY=clamp(depthScreenY-hoverLift,7,88);
     const perspective=(mode==='basic')
       ? clamp(1.10-depthTravel*0.0046,0.48,1.10)
       : (mode==='hover' ? clamp(1.12-depthTravel*0.0062,0.52,1.12) : clamp(1.04-depthTravel*0.0048,0.78,1.10));
     drone.style.left=x+'%'; drone.style.top=screenY+'%';
-    drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
+    if(mode==='hover'){
+      // v6.8: heading is yaw, not an upside-down 2D spin. rotateY gives a 2.5D turn effect.
+      drone.style.transform=`translate(-50%,-50%) rotateZ(${tiltX*.22}deg) rotateX(${tiltY}deg) rotateY(${rot}deg) scale(${perspective})`;
+    } else {
+      drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
+    }
     if(groundShadow){
       groundShadow.style.left=x+'%';
       groundShadow.style.top=y+'%';
@@ -309,8 +317,9 @@
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
         if(held.w) outboundSeconds+=dt;
       } else { vx*=.88; vy*=.88; tiltX*=.88; tiltY*=.88; if(Date.now()-lastMove>250)setMotor(.50); }
-      if(held.up){alt=clamp(alt+6.0*dt,0,72);lastMove=Date.now();setMotor(.90,.24);}
-      if(held.down){alt=clamp(alt-6.0*dt,0,72);lastMove=Date.now();setMotor(.32);}
+      const verticalRate=(mode==='hover')?8.0:6.0;
+      if(held.up){alt=clamp(alt+verticalRate*dt,0,72);lastMove=Date.now();setMotor(.90,.24);}
+      if(held.down){alt=clamp(alt-verticalRate*dt,0,72);lastMove=Date.now();setMotor(.32);}
       const d=homeDistance(); maxHomeDistance=Math.max(maxHomeDistance,d);
       basicProgress(dt,d);
       draw();
@@ -355,9 +364,16 @@
       if(stage===1&&alt>=8){ addScore(300,'ALTITUDE 8m'); setMission(2); }
       if(stage>=2&&stage<=4){
         const gi=stage-2, g=L2_GATES[gi];
-        const dx=Math.abs(x-g.x), dy=Math.abs(y-g.y);
-        text.textContent=`${gi+1}번 게이트 · 좌우 오차 ${dx.toFixed(1)}m · 전방 ${Math.max(0,y-g.y).toFixed(0)}m`;
-        if(dy<4.8 && dx<8.5){ addScore(500+gi*75,`GATE ${gi+1} PASS`); setMission(stage+1); }
+        const dx=Math.abs(x-g.x), forward=Math.max(0,y-g.y);
+        // Screen-space alignment: at the gate plane, the opening center is ~65% high.
+        const droneScreenY=clamp(69-alt*.74,7,88);
+        const gateCenterY=65;
+        const verticalError=Math.abs(droneScreenY-gateCenterY);
+        text.textContent=`${gi+1}번 게이트 · 좌우 오차 ${dx.toFixed(1)}m · 높이 오차 ${verticalError.toFixed(1)} · 전방 ${forward.toFixed(0)}m`;
+        // v6.8: pass only when the aircraft truly reaches the gate plane AND is visually inside the opening.
+        if(Math.abs(y-g.y)<2.8 && dx<5.0 && verticalError<8.5){
+          addScore(500+gi*75,`GATE ${gi+1} PASS`); flashComplete(`GATE ${gi+1} PASS`); setMission(stage+1);
+        }
       }
       if(stage===5){
         const h=((rot%360)+360)%360, towardHome=homeHeading(), err=Math.abs(angleDelta(towardHome,h));
