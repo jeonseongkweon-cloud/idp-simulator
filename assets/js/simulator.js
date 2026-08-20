@@ -11,6 +11,8 @@
   const outboundGate=$('#outboundGate'), homeBeacon=$('#homeBeacon'), flightTrail=$('#flightTrail');
 
   const HOME={x:50,y:82};
+  // LEVEL 1 photo alignment: center of the real yellow 25m gate in the background image.
+  const GATE={x:42.5,y:31};
   let x=HOME.x,y=HOME.y,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode='basic',battery=100,completeShown=false;
   let vx=0,vy=0,speed=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,currentLevel=1;
   let motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0;
@@ -48,11 +50,16 @@
 
   function draw(){
     const d=homeDistance();
-    // ALTITUDE is now visually independent from forward/back travel.
-    // The ground shadow stays on the virtual ground while the aircraft rises above it.
-    const altitudeLift=alt*0.72;
-    const screenY=clamp(y-altitudeLift,7,89);
-    const perspective=clamp(1.04-(HOME.y-y)*0.0048,0.78,1.10);
+    // v6.2: DEPTH (forward/back) and ALTITUDE are rendered separately.
+    // Forward travel moves toward the 25m gate with strong perspective/parallax,
+    // while altitude moves the aircraft vertically above its ground track.
+    const altitudeLift=alt*0.78;
+    const depthTravel=Math.max(0,HOME.y-y);
+    const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.52 : y;
+    const screenY=clamp(depthScreenY-altitudeLift,7,89);
+    const perspective=(mode==='basic')
+      ? clamp(1.10-depthTravel*0.009,0.62,1.10)
+      : clamp(1.04-depthTravel*0.0048,0.78,1.10);
     drone.style.left=x+'%'; drone.style.top=screenY+'%';
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
     if(groundShadow){
@@ -67,8 +74,10 @@
     flightArea.classList.toggle('outdoor-moving',flying&&speed>.7);
 
     if(outdoorPhoto){
-      const parX=(HOME.x-x)*1.6, parY=(HOME.y-y)*1.2;
-      outdoorPhoto.style.transform=`translate(${parX}px,${parY}px) scale(${1.035+Math.min(d,55)*.0015})`;
+      const parX=(HOME.x-x)*2.0;
+      const parY=(mode==='basic' ? depthTravel*.32 : (HOME.y-y)*1.2);
+      const zoom=(mode==='basic') ? 1.025+Math.min(depthTravel,54)*.0053 : 1.035+Math.min(d,55)*.0015;
+      outdoorPhoto.style.transform=`translate(${parX}px,${parY}px) scale(${zoom})`;
     }
     if(groundGrid) groundGrid.style.backgroundPosition=`${(x-HOME.x)*9}px ${(HOME.y-y)*12}px, ${(HOME.y-y)*7}px ${(x-HOME.x)*5}px`;
     if(landingPad){
@@ -102,7 +111,7 @@
     basic:[
       ['MISSION 01','TAKE OFF','SPACE 키를 눌러 이륙하십시오.'],
       ['MISSION 02','CLIMB TO 5m','↑ 키를 눌러 고도 5m까지 상승하십시오.'],
-      ['MISSION 03','OUTBOUND FLIGHT','W 키를 계속 눌러 TURN POINT까지 5초 이상 전진하십시오.'],
+      ['MISSION 03','25m GATE FLIGHT','W 키를 계속 눌러 노란 25m 게이트 중앙을 통과하십시오.'],
       ['MISSION 04','TURN 180°','←/→ 키로 기체를 약 180° 회전해 HOME을 바라보십시오.'],
       ['MISSION 05','RETURN HOME','W 키로 HOME 착륙장까지 직접 복귀하십시오.'],
       ['MISSION 06','PRECISION LAND','H 위에서 고도 1m 이하로 낮춘 뒤 SPACE로 착륙하십시오.']
@@ -200,7 +209,16 @@
         const screenRate=speed*1.38;
         const dx=(Math.sin(rad)*forward + Math.cos(rad)*strafe)*screenRate*dt;
         const dy=(-Math.cos(rad)*forward + Math.sin(rad)*strafe)*screenRate*dt;
-        x=clamp(x+dx,5,95); y=clamp(y+dy,14,87); vx=dx/dt; vy=dy/dt; lastMove=Date.now();
+        x=clamp(x+dx,5,95); y=clamp(y+dy,14,87);
+        // TRAINING ASSIST: on LEVEL 1, forward flight gently converges to the
+        // real 25m gate center; after the turn, it gently converges to HOME.
+        // A/D still works and can override the line, but children are not forced
+        // to make pixel-perfect steering corrections.
+        if(mode==='basic' && held.w && Math.abs(strafe)<0.01){
+          const tx=stage<=2 ? GATE.x : (stage>=4 ? HOME.x : x);
+          x += (tx-x)*Math.min(1,dt*0.62);
+        }
+        vx=dx/dt; vy=dy/dt; lastMove=Date.now();
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
         if(held.w) outboundSeconds+=dt;
       } else { vx*=.88; vy*=.88; tiltX*=.88; tiltY*=.88; if(Date.now()-lastMove>250)setMotor(.50); }
@@ -218,8 +236,10 @@
     if(mode!=='basic')return;
     if(stage===1 && alt>=5){ addScore(250,'ALTITUDE 5m'); setMission(2); outboundSeconds=0; }
     if(stage===2){
-      text.textContent=`TURN POINT까지 전진 · ${outboundSeconds.toFixed(1)}초 / 5.0초 · HOME 거리 ${d.toFixed(0)}m`;
-      if(outboundSeconds>=5 && d>=28){ turnReached=true; addScore(400,'OUTBOUND COMPLETE'); setMission(3); }
+      const gateOffset=Math.abs(x-GATE.x);
+      const gateRemain=Math.max(0,y-GATE.y);
+      text.textContent=`25m 게이트 중앙으로 전진 · ${outboundSeconds.toFixed(1)}초 / 최소 5.0초 · 게이트 ${gateRemain.toFixed(0)}m`;
+      if(outboundSeconds>=5 && y<=34 && gateOffset<8){ turnReached=true; addScore(400,'25m GATE PASS'); setMission(3); }
     }
     if(stage===3){
       const h=((rot%360)+360)%360; const towardHome=Math.atan2(HOME.x-x, -(HOME.y-y))*180/Math.PI; const err=Math.abs((((h-towardHome)+540)%360)-180);
