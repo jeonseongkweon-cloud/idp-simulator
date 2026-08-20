@@ -54,12 +54,12 @@
     // v6.2: DEPTH (forward/back) and ALTITUDE are rendered separately.
     // Forward travel moves toward the 25m gate with strong perspective/parallax,
     // while altitude moves the aircraft vertically above its ground track.
-    const altitudeLift=alt*0.43;
+    const altitudeLift=alt*0.72;
     const depthTravel=Math.max(0,HOME.y-y);
-    const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.52 : y;
+    const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.36 : y;
     const screenY=clamp(depthScreenY-altitudeLift,3,89);
     const perspective=(mode==='basic')
-      ? clamp(1.10-depthTravel*0.009,0.62,1.10)
+      ? clamp(1.10-depthTravel*0.0046,0.48,1.10)
       : clamp(1.04-depthTravel*0.0048,0.78,1.10);
     drone.style.left=x+'%'; drone.style.top=screenY+'%';
     drone.style.transform=`translate(-50%,-50%) rotateZ(${rot}deg) rotateX(${tiltY}deg) rotateY(${tiltX}deg) scale(${perspective})`;
@@ -77,7 +77,7 @@
     if(outdoorPhoto){
       const parX=(HOME.x-x)*2.0;
       const parY=(mode==='basic' ? depthTravel*.32 : (HOME.y-y)*1.2);
-      const zoom=(mode==='basic') ? 1.025+Math.min(depthTravel,54)*.0053 : 1.035+Math.min(d,55)*.0015;
+      const zoom=(mode==='basic') ? 1.025+Math.min(depthTravel,115)*.00315 : 1.035+Math.min(d,55)*.0015;
       outdoorPhoto.style.transform=`translate(${parX}px,${parY}px) scale(${zoom})`;
     }
     if(groundGrid) groundGrid.style.backgroundPosition=`${(x-HOME.x)*9}px ${(HOME.y-y)*12}px, ${(HOME.y-y)*7}px ${(x-HOME.x)*5}px`;
@@ -111,7 +111,7 @@
   const missionSets={
     basic:[
       ['MISSION 01','TAKE OFF','SPACE 키를 눌러 이륙하십시오.'],
-      ['MISSION 02','CLIMB TO 5m','↑ 키를 눌러 고도 5m까지 상승하십시오.'],
+      ['MISSION 02','CLIMB / DESCEND TEST','↑/↓ 키를 길게 눌러 넓어진 고도 범위를 직접 확인하십시오. 5m 이상 상승하면 다음 미션으로 진행합니다.'],
       ['MISSION 03','25m GATE FLIGHT','W 키를 계속 눌러 노란 25m 게이트 중앙을 통과하십시오.'],
       ['MISSION 04','FLY BEYOND GATE','게이트를 통과한 뒤 W를 계속 눌러 TURN POINT까지 더 멀리 비행하십시오.'],
       ['MISSION 05','TURN 180°','←/→ 키로 기체를 약 180° 회전해 HOME을 바라보십시오.'],
@@ -204,14 +204,14 @@
       let forward=0, strafe=0;
       if(held.w)forward+=1; if(held.s)forward-=1; if(held.d)strafe+=1; if(held.a)strafe-=1;
       const commanded=Math.hypot(forward,strafe)>0;
-      const targetSpeed=commanded?5.6:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
+      const targetSpeed=commanded?6.4:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
         const n=Math.hypot(forward,strafe)||1; forward/=n; strafe/=n;
-        // v6.4: slower depth travel gives children a clearly visible 8-10 second outbound/return leg.
-        const screenRate=speed*0.92;
+        // v6.5: expanded forward/back flight envelope; W/S can keep travelling far beyond the gate while held.
+        const screenRate=speed*0.88;
         const dx=(Math.sin(rad)*forward + Math.cos(rad)*strafe)*screenRate*dt;
         const dy=(-Math.cos(rad)*forward + Math.sin(rad)*strafe)*screenRate*dt;
-        x=clamp(x+dx,3,97); y=clamp(y+dy,4,88);
+        x=clamp(x+dx,3,97); y=clamp(y+dy,-60,92);
         // TRAINING ASSIST: on LEVEL 1, forward flight gently converges to the
         // real 25m gate center; after the turn, it gently converges to HOME.
         // A/D still works and can override the line, but children are not forced
@@ -224,8 +224,8 @@
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
         if(held.w) outboundSeconds+=dt;
       } else { vx*=.88; vy*=.88; tiltX*=.88; tiltY*=.88; if(Date.now()-lastMove>250)setMotor(.50); }
-      if(held.up){alt=clamp(alt+2.0*dt,0,30);lastMove=Date.now();setMotor(.82,.2);}
-      if(held.down){alt=clamp(alt-2.0*dt,0,30);lastMove=Date.now();setMotor(.38);}
+      if(held.up){alt=clamp(alt+6.0*dt,0,72);lastMove=Date.now();setMotor(.90,.24);}
+      if(held.down){alt=clamp(alt-6.0*dt,0,72);lastMove=Date.now();setMotor(.32);}
       const d=homeDistance(); maxHomeDistance=Math.max(maxHomeDistance,d);
       basicProgress(dt,d);
       draw();
