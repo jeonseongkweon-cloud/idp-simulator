@@ -18,6 +18,7 @@
   let vx=0,vy=0,speed=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,currentLevel=1;
   let motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0;
   let lastFrame=performance.now(), outboundSeconds=0, maxHomeDistance=0, turnReached=false;
+  let turnAssistHold=0, autoHomeTurn=false, autoTurnDir=1;
   const held={w:false,s:false,a:false,d:false,up:false,down:false,left:false,right:false};
   const modeLevel={basic:1,hover:2,rings:3,search:4,wildfire:5,night:6,disaster:7,patrol:8,rescue:9,master:10};
 
@@ -105,7 +106,7 @@
   }
   function resetCommon(){
     x=HOME.x; y=HOME.y; rot=0; alt=0; score=0; flying=false; paused=false; start=Date.now(); lastMove=0; battery=100; completeShown=false;
-    vx=vy=speed=tiltX=tiltY=0; hold=0; ringIndex=0; outboundSeconds=0; maxHomeDistance=0; turnReached=false; clearHeld(); resetEnv(); drone.classList.remove('climbing','landing'); motorOff(); draw();
+    vx=vy=speed=tiltX=tiltY=0; hold=0; ringIndex=0; outboundSeconds=0; maxHomeDistance=0; turnReached=false; turnAssistHold=0; autoHomeTurn=false; clearHeld(); resetEnv(); drone.classList.remove('climbing','landing'); motorOff(); draw();
   }
 
   const missionSets={
@@ -114,7 +115,7 @@
       ['MISSION 02','CLIMB / DESCEND TEST','↑/↓ 키를 길게 눌러 넓어진 고도 범위를 직접 확인하십시오. 5m 이상 상승하면 다음 미션으로 진행합니다.'],
       ['MISSION 03','25m GATE FLIGHT','W 키를 계속 눌러 노란 25m 게이트 중앙을 통과하십시오.'],
       ['MISSION 04','FLY BEYOND GATE','게이트를 통과한 뒤 W를 계속 눌러 TURN POINT까지 더 멀리 비행하십시오.'],
-      ['MISSION 05','TURN 180°','←/→ 키로 기체를 약 180° 회전해 HOME을 바라보십시오.'],
+      ['MISSION 05','TURN 180°','A 또는 D를 0.7초 이상 길게 눌러 HOME 자동 180° 선회를 실행하십시오. ←/→는 수동 회전입니다.'],
       ['MISSION 06','RETURN HOME','W 키로 HOME 착륙장까지 직접 복귀하십시오.'],
       ['MISSION 07','PRECISION LAND','H 위에서 고도 1m 이하로 낮춘 뒤 SPACE로 착륙하십시오.']
     ],
@@ -194,16 +195,62 @@
   addEventListener('keyup',e=>keyState(e,false),{passive:false});
   addEventListener('blur',clearHeld);
 
+  function homeHeading(){
+    return Math.atan2(HOME.x-x, -(HOME.y-y))*180/Math.PI;
+  }
+  function angleDelta(target,current){
+    return ((target-current+540)%360)-180;
+  }
+
   function flightStep(ts){
     const dt=Math.min(.05,(ts-lastFrame)/1000||.016); lastFrame=ts;
     if(view.classList.contains('open') && !paused && flying){
-      const turnRate=92; // deg/sec - clear visible yaw
-      if(held.left){rot-=turnRate*dt; lastMove=Date.now();}
-      if(held.right){rot+=turnRate*dt; lastMove=Date.now();}
+      const turnRate=92; // deg/sec - manual yaw
+      if(!autoHomeTurn){
+        if(held.left){rot-=turnRate*dt; lastMove=Date.now();}
+        if(held.right){rot+=turnRate*dt; lastMove=Date.now();}
+      }
+
+      // v6.6 HOME TURN ASSIST:
+      // A/D remain lateral controls during normal flight. During the TURN 180° mission,
+      // holding either key for 0.7s starts a smooth automatic yaw toward HOME.
+      if(mode==='basic' && stage===4 && !autoHomeTurn){
+        if(held.a || held.d){
+          turnAssistHold += dt;
+          if(turnAssistHold>=0.70){
+            autoHomeTurn=true;
+            autoTurnDir=held.a?-1:1;
+            speed=0; vx=vy=0;
+            flashComplete('HOME TURN ASSIST');
+          }
+        } else turnAssistHold=0;
+      } else if(stage!==4){
+        turnAssistHold=0;
+        autoHomeTurn=false;
+      }
+
+      if(autoHomeTurn && mode==='basic' && stage===4){
+        const targetH=homeHeading();
+        let delta=angleDelta(targetH,rot);
+        // honor the chosen A/D direction for the visual 180° sweep when both paths are equivalent
+        if(Math.abs(Math.abs(delta)-180)<4) delta=180*autoTurnDir;
+        const step=Math.sign(delta)*Math.min(Math.abs(delta),145*dt);
+        rot+=step;
+        tiltX*=.82; tiltY*=.82;
+        setMotor(.58,.08); lastMove=Date.now();
+        if(Math.abs(angleDelta(targetH,rot))<2.5){
+          rot=targetH; autoHomeTurn=false; turnAssistHold=0;
+          addScore(350,'HOME 180° TURN'); setMission(5);
+        }
+      }
+
       const rad=rot*Math.PI/180;
       let forward=0, strafe=0;
-      if(held.w)forward+=1; if(held.s)forward-=1; if(held.d)strafe+=1; if(held.a)strafe-=1;
-      const commanded=Math.hypot(forward,strafe)>0;
+      if(held.w)forward+=1; if(held.s)forward-=1;
+      if(!autoHomeTurn){ if(held.d)strafe+=1; if(held.a)strafe-=1; }
+      // suppress lateral drift once A/D has clearly become a long-press turn command
+      if(mode==='basic' && stage===4 && turnAssistHold>.28) strafe=0;
+      const commanded=!autoHomeTurn && Math.hypot(forward,strafe)>0;
       const targetSpeed=commanded?6.4:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
         const n=Math.hypot(forward,strafe)||1; forward/=n; strafe/=n;
@@ -249,9 +296,12 @@
       if(y<=TURN.y+3){ turnReached=true; addScore(350,'TURN POINT'); setMission(4); }
     }
     if(stage===4){
-      const h=((rot%360)+360)%360; const towardHome=Math.atan2(HOME.x-x, -(HOME.y-y))*180/Math.PI; const err=Math.abs((((h-towardHome)+540)%360)-180);
-      text.textContent=`기체를 HOME 방향으로 180° 회전 · 방향 오차 ${err.toFixed(0)}°`;
-      if(err<24){ addScore(350,'TURN COMPLETE'); setMission(5); }
+      const h=((rot%360)+360)%360; const towardHome=homeHeading(); const err=Math.abs(angleDelta(towardHome,h));
+      const assist=Math.min(.7,turnAssistHold);
+      text.textContent=autoHomeTurn
+        ? `HOME 자동 선회 중 · 방향 오차 ${err.toFixed(0)}°`
+        : `A/D 길게 = HOME 자동 180° 선회 (${assist.toFixed(1)}/0.7초) · ←/→ 수동 · 오차 ${err.toFixed(0)}°`;
+      if(!autoHomeTurn && err<18){ addScore(350,'TURN COMPLETE'); setMission(5); turnAssistHold=0; }
     }
     if(stage===5){
       text.textContent=`HOME까지 ${d.toFixed(1)}m · W로 길게 복귀하십시오.`;
