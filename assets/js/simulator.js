@@ -10,9 +10,10 @@
   const landingPad=document.querySelector('.landing-pad'), outdoorPhoto=$('#outdoorPhoto'), groundGrid=document.querySelector('.ground-grid'), groundShadow=$('#groundShadow');
   const outboundGate=$('#outboundGate'), homeBeacon=$('#homeBeacon'), flightTrail=$('#flightTrail');
 
-  const HOME={x:50,y:82};
+  const HOME={x:42.5,y:82};
   // LEVEL 1 photo alignment: center of the real yellow 25m gate in the background image.
   const GATE={x:42.5,y:31};
+  const TURN={x:42.5,y:8};
   let x=HOME.x,y=HOME.y,rot=0,alt=0,score=0,flying=false,paused=false,start=0,timerId=null,stage=0,lastMove=0,mode='basic',battery=100,completeShown=false;
   let vx=0,vy=0,speed=0,tiltX=0,tiltY=0,hold=0,ringIndex=0,currentLevel=1;
   let motorCtx=null,motorOsc=null,motorGain=null,motorFilter=null,motorLevel=0;
@@ -53,10 +54,10 @@
     // v6.2: DEPTH (forward/back) and ALTITUDE are rendered separately.
     // Forward travel moves toward the 25m gate with strong perspective/parallax,
     // while altitude moves the aircraft vertically above its ground track.
-    const altitudeLift=alt*0.78;
+    const altitudeLift=alt*0.43;
     const depthTravel=Math.max(0,HOME.y-y);
     const depthScreenY=(mode==='basic') ? HOME.y-depthTravel*0.52 : y;
-    const screenY=clamp(depthScreenY-altitudeLift,7,89);
+    const screenY=clamp(depthScreenY-altitudeLift,3,89);
     const perspective=(mode==='basic')
       ? clamp(1.10-depthTravel*0.009,0.62,1.10)
       : clamp(1.04-depthTravel*0.0048,0.78,1.10);
@@ -112,9 +113,10 @@
       ['MISSION 01','TAKE OFF','SPACE 키를 눌러 이륙하십시오.'],
       ['MISSION 02','CLIMB TO 5m','↑ 키를 눌러 고도 5m까지 상승하십시오.'],
       ['MISSION 03','25m GATE FLIGHT','W 키를 계속 눌러 노란 25m 게이트 중앙을 통과하십시오.'],
-      ['MISSION 04','TURN 180°','←/→ 키로 기체를 약 180° 회전해 HOME을 바라보십시오.'],
-      ['MISSION 05','RETURN HOME','W 키로 HOME 착륙장까지 직접 복귀하십시오.'],
-      ['MISSION 06','PRECISION LAND','H 위에서 고도 1m 이하로 낮춘 뒤 SPACE로 착륙하십시오.']
+      ['MISSION 04','FLY BEYOND GATE','게이트를 통과한 뒤 W를 계속 눌러 TURN POINT까지 더 멀리 비행하십시오.'],
+      ['MISSION 05','TURN 180°','←/→ 키로 기체를 약 180° 회전해 HOME을 바라보십시오.'],
+      ['MISSION 06','RETURN HOME','W 키로 HOME 착륙장까지 직접 복귀하십시오.'],
+      ['MISSION 07','PRECISION LAND','H 위에서 고도 1m 이하로 낮춘 뒤 SPACE로 착륙하십시오.']
     ],
     hover:[['LEVEL 2 / 01','TAKE OFF','SPACE 키로 이륙하십시오.'],['LEVEL 2 / 02','CLIMB TO 6m','고도 6m까지 상승하십시오.'],['LEVEL 2 / 03','ENTER HOVER ZONE','중앙 HOVER ZONE 안으로 이동하십시오.'],['LEVEL 2 / 04','HOLD 10 SECONDS','10초 정지비행을 유지하십시오.'],['LEVEL 2 / 05','LAND','착륙장으로 복귀해 착륙하십시오.']],
     rings:[['RING / 01','TAKE OFF','SPACE 키로 이륙하십시오.'],['RING / 02','PASS RING 1','첫 번째 링 중심을 통과하십시오.'],['RING / 03','PASS RING 2','두 번째 링을 통과하십시오.'],['RING / 04','PASS RING 3','세 번째 링을 통과하십시오.'],['RING / 05','RETURN & LAND','착륙장으로 복귀하십시오.']],
@@ -205,25 +207,25 @@
       const targetSpeed=commanded?5.6:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
         const n=Math.hypot(forward,strafe)||1; forward/=n; strafe/=n;
-        // v6.3: slower depth travel gives children a clearly visible 8-10 second outbound/return leg.
+        // v6.4: slower depth travel gives children a clearly visible 8-10 second outbound/return leg.
         const screenRate=speed*0.92;
         const dx=(Math.sin(rad)*forward + Math.cos(rad)*strafe)*screenRate*dt;
         const dy=(-Math.cos(rad)*forward + Math.sin(rad)*strafe)*screenRate*dt;
-        x=clamp(x+dx,5,95); y=clamp(y+dy,14,87);
+        x=clamp(x+dx,3,97); y=clamp(y+dy,4,88);
         // TRAINING ASSIST: on LEVEL 1, forward flight gently converges to the
         // real 25m gate center; after the turn, it gently converges to HOME.
         // A/D still works and can override the line, but children are not forced
         // to make pixel-perfect steering corrections.
         if(mode==='basic' && held.w && Math.abs(strafe)<0.01){
-          const tx=stage<=2 ? GATE.x : (stage>=4 ? HOME.x : x);
+          const tx=stage<=3 ? GATE.x : (stage>=5 ? HOME.x : x);
           x += (tx-x)*Math.min(1,dt*0.62);
         }
         vx=dx/dt; vy=dy/dt; lastMove=Date.now();
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
         if(held.w) outboundSeconds+=dt;
       } else { vx*=.88; vy*=.88; tiltX*=.88; tiltY*=.88; if(Date.now()-lastMove>250)setMotor(.50); }
-      if(held.up){alt=clamp(alt+1.55*dt,0,15);lastMove=Date.now();setMotor(.82,.2);}
-      if(held.down){alt=clamp(alt-1.55*dt,0,15);lastMove=Date.now();setMotor(.38);}
+      if(held.up){alt=clamp(alt+2.0*dt,0,30);lastMove=Date.now();setMotor(.82,.2);}
+      if(held.down){alt=clamp(alt-2.0*dt,0,30);lastMove=Date.now();setMotor(.38);}
       const d=homeDistance(); maxHomeDistance=Math.max(maxHomeDistance,d);
       basicProgress(dt,d);
       draw();
@@ -238,17 +240,22 @@
     if(stage===2){
       const gateOffset=Math.abs(x-GATE.x);
       const gateRemain=Math.max(0,y-GATE.y);
-      text.textContent=`25m 게이트 중앙으로 전진 · ${outboundSeconds.toFixed(1)}초 / 목표 8~10초 · 게이트 ${gateRemain.toFixed(0)}m`;
-      if(outboundSeconds>=7.5 && y<=34 && gateOffset<8){ turnReached=true; addScore(400,'25m GATE PASS'); setMission(3); }
+      text.textContent=`25m 게이트 중앙으로 전진 · ${outboundSeconds.toFixed(1)}초 · 게이트 ${gateRemain.toFixed(0)}m`;
+      if(y<=33 && gateOffset<8){ addScore(400,'25m GATE PASS'); setMission(3); }
     }
     if(stage===3){
-      const h=((rot%360)+360)%360; const towardHome=Math.atan2(HOME.x-x, -(HOME.y-y))*180/Math.PI; const err=Math.abs((((h-towardHome)+540)%360)-180);
-      text.textContent=`기체를 HOME 방향으로 회전 · 방향 오차 ${err.toFixed(0)}°`;
-      if(err<24){ addScore(350,'TURN COMPLETE'); setMission(4); }
+      const turnRemain=Math.max(0,y-TURN.y);
+      text.textContent=`게이트 통과 성공 · W를 계속 눌러 TURN POINT까지 ${turnRemain.toFixed(0)}m 더 전진`;
+      if(y<=TURN.y+3){ turnReached=true; addScore(350,'TURN POINT'); setMission(4); }
     }
     if(stage===4){
-      text.textContent=`HOME까지 ${d.toFixed(1)}m · W로 복귀하십시오.`;
-      if(d<9){ addScore(450,'RETURN HOME'); setMission(5); }
+      const h=((rot%360)+360)%360; const towardHome=Math.atan2(HOME.x-x, -(HOME.y-y))*180/Math.PI; const err=Math.abs((((h-towardHome)+540)%360)-180);
+      text.textContent=`기체를 HOME 방향으로 180° 회전 · 방향 오차 ${err.toFixed(0)}°`;
+      if(err<24){ addScore(350,'TURN COMPLETE'); setMission(5); }
+    }
+    if(stage===5){
+      text.textContent=`HOME까지 ${d.toFixed(1)}m · W로 길게 복귀하십시오.`;
+      if(d<9){ addScore(450,'RETURN HOME'); setMission(6); }
     }
   }
 
