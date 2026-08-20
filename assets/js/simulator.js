@@ -202,11 +202,11 @@
       let forward=0, strafe=0;
       if(held.w)forward+=1; if(held.s)forward-=1; if(held.d)strafe+=1; if(held.a)strafe-=1;
       const commanded=Math.hypot(forward,strafe)>0;
-      const targetSpeed=commanded?6.4:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
+      const targetSpeed=commanded?5.6:0; speed += (targetSpeed-speed)*Math.min(1,dt*(commanded?5.4:3.0));
       if(commanded){
         const n=Math.hypot(forward,strafe)||1; forward/=n; strafe/=n;
-        // 5.2 m/s is mapped to ~6.2 screen-% per second: a visible 6-9 second outbound leg.
-        const screenRate=speed*1.38;
+        // v6.3: slower depth travel gives children a clearly visible 8-10 second outbound/return leg.
+        const screenRate=speed*0.92;
         const dx=(Math.sin(rad)*forward + Math.cos(rad)*strafe)*screenRate*dt;
         const dy=(-Math.cos(rad)*forward + Math.sin(rad)*strafe)*screenRate*dt;
         x=clamp(x+dx,5,95); y=clamp(y+dy,14,87);
@@ -222,8 +222,8 @@
         tiltY=clamp(-forward*17,-18,18); tiltX=clamp(strafe*16,-18,18); setMotor(.68+Math.min(.16,speed*.018),.12);
         if(held.w) outboundSeconds+=dt;
       } else { vx*=.88; vy*=.88; tiltX*=.88; tiltY*=.88; if(Date.now()-lastMove>250)setMotor(.50); }
-      if(held.up){alt=clamp(alt+4.2*dt,0,30);lastMove=Date.now();setMotor(.82,.2);}
-      if(held.down){alt=clamp(alt-4.0*dt,0,30);lastMove=Date.now();setMotor(.38);}
+      if(held.up){alt=clamp(alt+1.55*dt,0,15);lastMove=Date.now();setMotor(.82,.2);}
+      if(held.down){alt=clamp(alt-1.55*dt,0,15);lastMove=Date.now();setMotor(.38);}
       const d=homeDistance(); maxHomeDistance=Math.max(maxHomeDistance,d);
       basicProgress(dt,d);
       draw();
@@ -238,8 +238,8 @@
     if(stage===2){
       const gateOffset=Math.abs(x-GATE.x);
       const gateRemain=Math.max(0,y-GATE.y);
-      text.textContent=`25m 게이트 중앙으로 전진 · ${outboundSeconds.toFixed(1)}초 / 최소 5.0초 · 게이트 ${gateRemain.toFixed(0)}m`;
-      if(outboundSeconds>=5 && y<=34 && gateOffset<8){ turnReached=true; addScore(400,'25m GATE PASS'); setMission(3); }
+      text.textContent=`25m 게이트 중앙으로 전진 · ${outboundSeconds.toFixed(1)}초 / 목표 8~10초 · 게이트 ${gateRemain.toFixed(0)}m`;
+      if(outboundSeconds>=7.5 && y<=34 && gateOffset<8){ turnReached=true; addScore(400,'25m GATE PASS'); setMission(3); }
     }
     if(stage===3){
       const h=((rot%360)+360)%360; const towardHome=Math.atan2(HOME.x-x, -(HOME.y-y))*180/Math.PI; const err=Math.abs((((h-towardHome)+540)%360)-180);

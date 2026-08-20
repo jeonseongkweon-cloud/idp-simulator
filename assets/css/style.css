@@ -419,3 +419,9 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 /* Forward/back uses world position; altitude never changes aircraft scale. */
 .real-drone{transform-origin:50% 50%!important}
 @media(max-width:720px){.reset-btn{display:none}.hud-actions{gap:4px}}
+
+/* v6.3 simulator version badge */
+.sim-mode-id{display:flex;align-items:center;gap:12px}
+.sim-mode-id>div{display:flex;flex-direction:column}
+.sim-version{font-style:normal;font-size:11px;font-weight:900;letter-spacing:.08em;color:#ffd85a;border:1px solid rgba(255,216,90,.55);background:rgba(255,216,90,.08);padding:4px 8px;border-radius:999px;white-space:nowrap}
+@media(max-width:760px){.sim-version{font-size:9px;padding:3px 6px}}
