@@ -52,6 +52,27 @@
   const homeDistance=()=>Math.hypot((x-HOME.x)*1.15, y-HOME.y);
   function nowTime(){ const sec=Math.floor((Date.now()-start)/1000); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
 
+  // v7.0: LEVEL 2 visual-space guidance.
+  // The gate that the trainee SEES is now the same gate used for scoring.
+  function level2VisualAlignment(gateEl){
+    if(!gateEl || !drone || !flightArea) return null;
+    const gr=gateEl.getBoundingClientRect();
+    const dr=drone.getBoundingClientRect();
+    const fr=flightArea.getBoundingClientRect();
+    if(!gr.width || !gr.height || !dr.width || !dr.height) return null;
+    const dcx=dr.left+dr.width/2, dcy=dr.top+dr.height/2;
+    const gcx=gr.left+gr.width/2, gcy=gr.top+gr.height/2;
+    // Ignore the glowing frame itself: this is the usable opening.
+    const halfW=gr.width*0.34, halfH=gr.height*0.31;
+    const dxPx=dcx-gcx, dyPx=dcy-gcy;
+    const inside=Math.abs(dxPx)<=halfW && Math.abs(dyPx)<=halfH;
+    // Convert visual displacement to friendly training "metres" only for HUD feedback.
+    // Zero on screen = zero in HUD, which was the important mismatch in v6.9.
+    const xErrM=Math.abs(dxPx)/Math.max(1,halfW)*2.5;
+    const yErrM=Math.abs(dyPx)/Math.max(1,halfH)*2.0;
+    return {inside,dxPx,dyPx,xErrM,yErrM,dcx,dcy,gcx,gcy,halfW,halfH,fr};
+  }
+
   function updateLevel2Scene(){
     if(!level2Scene || mode!=='hover') return;
     const courseDepth=Math.max(0,HOME.y-y);
@@ -388,16 +409,25 @@
     if(mode==='hover'&&flying){
       if(stage===1&&alt>=8){ addScore(300,'ALTITUDE 8m'); setMission(2); }
       if(stage>=2&&stage<=4){
-        const gi=stage-2, g=L2_GATES[gi];
-        const dx=Math.abs(x-g.x), forward=Math.max(0,y-g.y);
-        // Screen-space alignment: at the gate plane, the opening center is ~65% high.
-        const droneScreenY=clamp(69-alt*.74,7,88);
-        const gateCenterY=65;
-        const verticalError=Math.abs(droneScreenY-gateCenterY);
-        text.textContent=`${gi+1}번 게이트 · 좌우 오차 ${dx.toFixed(1)}m · 높이 오차 ${verticalError.toFixed(1)} · 전방 ${forward.toFixed(0)}m`;
-        // v6.9: pass only when the aircraft truly reaches the gate plane AND is visually inside the opening.
-        if(Math.abs(y-g.y)<2.8 && dx<5.0 && verticalError<8.5){
-          addScore(500+gi*75,`GATE ${gi+1} PASS`); flashComplete(`GATE ${gi+1} PASS`); setMission(stage+1);
+        const gi=stage-2, g=L2_GATES[gi], gateEl=l2Gates[gi];
+        const forwardSigned=y-g.y;
+        const forward=Math.max(0,forwardSigned);
+        const vis=level2VisualAlignment(gateEl);
+        if(vis){
+          const lr=vis.dxPx>10?'← A':vis.dxPx<-10?'D →':'CENTER';
+          const ud=vis.dyPx>10?'↑ 상승':vis.dyPx<-10?'↓ 하강':'HEIGHT OK';
+          text.textContent=`${gi+1}번 게이트 · 좌우 ${vis.xErrM.toFixed(1)}m (${lr}) · 높이 ${vis.yErrM.toFixed(1)}m (${ud}) · 전방 ${forward.toFixed(0)}m`;
+          // The physical flight plane still determines WHEN the gate may be crossed,
+          // but the visible opening determines WHETHER it was crossed correctly.
+          // A slightly wider plane window lets the child correct with A/D/↑/↓ instead of missing in one frame.
+          const atGatePlane=Math.abs(forwardSigned)<=5.0;
+          if(atGatePlane && vis.inside){
+            addScore(500+gi*75,`GATE ${gi+1} PASS`); flashComplete(`GATE ${gi+1} PASS`); setMission(stage+1);
+          } else if(forwardSigned < -5.0 && !vis.inside){
+            text.textContent=`GATE ${gi+1} 빗나감 · S로 조금 후진한 뒤 화면의 게이트 중앙에 맞추세요 · 좌우 ${vis.xErrM.toFixed(1)}m · 높이 ${vis.yErrM.toFixed(1)}m`;
+          }
+        } else {
+          text.textContent=`${gi+1}번 게이트 접근 중 · 전방 ${forward.toFixed(0)}m`;
         }
       }
       if(stage===5){
