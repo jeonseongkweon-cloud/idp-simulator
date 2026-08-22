@@ -1,65 +1,127 @@
-(() => {
-  const cfg=window.IDP_CONFIG||{};
-  const state={session:null,user:null,member:null,connected:false};
-  const client=window.supabase?.createClient(cfg.supabaseUrl,cfg.supabaseKey,{
-    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}
-  });
-  window.IDPGMS={client,state,login,logout,recordCompletion,getMember:()=>state.member};
+(function(){
+  'use strict';
 
-  function dispatch(message=''){
-    window.dispatchEvent(new CustomEvent('idp-gms-auth',{detail:{
-      connected:state.connected,name:state.member?.name||'',email:state.user?.email||'',message
-    }}));
-  }
-  function callbackUrl(){ return new URL('./callback.html',location.href).href; }
-  function homeUrl(){ return new URL('./',location.href).href; }
+  const IDP_CALLBACK = 'https://jeonseongkweon-cloud.github.io/idp-simulator/callback.html';
+  const IDP_HOME = 'https://jeonseongkweon-cloud.github.io/idp-simulator/';
 
-  async function refresh(){
-    if(!client){dispatch('Supabase SDK 연결 실패');return}
-    const {data:{session},error}=await client.auth.getSession();
-    if(error||!session){state.session=null;state.user=null;state.member=null;state.connected=false;dispatch();return}
-    state.session=session; state.user=session.user;
-    const {data:member,error:mErr}=await client.from('members')
-      .select('id,name,email,status').eq('auth_user_id',session.user.id).maybeSingle();
-    if(mErr||!member){state.member=null;state.connected=false;dispatch('Google 인증은 되었지만 GMS 회원정보가 연결되지 않았습니다.');return}
-    state.member=member;state.connected=true;dispatch();
+  function getCfg(){
+    const c = window.IDP_CONFIG || window.CONFIG || window.SUPABASE_CONFIG || {};
+    const url = c.supabaseUrl || c.SUPABASE_URL || window.SUPABASE_URL;
+    const key = c.supabaseAnonKey || c.SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY;
+    return {url,key};
   }
-  async function login(){
-    if(!client)return;
-    const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:callbackUrl()}});
-    if(error) dispatch('Google 로그인 시작 실패: '+error.message);
+
+  const {url,key} = getCfg();
+  if(!url || !key || !window.supabase){
+    console.warn('[IDP GMS] Supabase config not found.');
+    return;
   }
-  async function logout(){
-    if(client) await client.auth.signOut();
-    state.session=null;state.user=null;state.member=null;state.connected=false;dispatch('로그아웃 완료');
-  }
-  async function recordCompletion(info){
-    const resultEl=document.getElementById('gmsSaveResult');
-    if(!state.connected||!state.member){
-      if(resultEl) resultEl.textContent='GMS 비로그인 · 훈련기록은 저장되지 않았습니다.';
-      return {saved:false};
+
+  const client = window.supabase.createClient(url,key);
+  window.idpSupabase = client;
+
+  const $ = (id)=>document.getElementById(id);
+
+  async function getMemberByUser(user){
+    if(!user) return null;
+    const {data,error} = await client
+      .from('members')
+      .select('id,name,email,auth_user_id')
+      .eq('auth_user_id',user.id)
+      .maybeSingle();
+    if(error){
+      console.warn('[IDP GMS] member lookup:',error.message);
+      return null;
     }
-    const seconds=Math.max(1,Number(info.seconds||0));
-    const minutes=Math.max(1,Math.ceil(seconds/60));
-    if(resultEl) resultEl.textContent='GMS에 훈련기록 저장 중…';
-    const mission=`LEVEL ${info.level} · ${info.mode} · SCORE ${Math.round(info.score||0)} · ${info.stars||0}STAR`;
-    const {error}=await client.rpc('gms_record_simulator_activity',{
-      p_member_id:state.member.id,
-      p_organization_code:'IDP',
-      p_simulator_key:`IDP-LEVEL-${info.level}`,
-      p_simulator_title:`IDP Drone Simulator LEVEL ${info.level}`,
-      p_minutes:minutes,
-      p_level_or_mission:mission
+    return data || null;
+  }
+
+  async function refreshLoginUI(){
+    const {data:{session}} = await client.auth.getSession();
+    const user = session?.user || null;
+    const member = await getMemberByUser(user);
+
+    window.IDP_GMS_SESSION = session || null;
+    window.IDP_GMS_USER = user || null;
+    window.IDP_GMS_MEMBER = member || null;
+
+    const result = $('loginResult');
+    const verify = $('verifyId');
+
+    if(user){
+      if(result){
+        result.innerHTML = member
+          ? `✅ GMS 로그인 완료<br><b>${member.name || user.email}</b><br>${user.email}`
+          : `⚠️ Google 로그인 완료<br>${user.email}<br>GMS 회원정보 연결 대기`;
+      }
+      if(verify){
+        verify.textContent='로그아웃';
+        verify.dataset.mode='logout';
+      }
+    } else {
+      if(result) result.innerHTML='Google 계정으로 로그인하면 훈련기록이 GMS에 저장됩니다.';
+      if(verify){
+        verify.textContent='Google 계정으로 로그인';
+        verify.dataset.mode='login';
+      }
+    }
+  }
+
+  async function googleLogin(){
+    localStorage.setItem('idp_oauth_return', IDP_HOME);
+    const {error} = await client.auth.signInWithOAuth({
+      provider:'google',
+      options:{
+        redirectTo: IDP_CALLBACK,
+        skipBrowserRedirect:false,
+        queryParams:{
+          access_type:'offline',
+          prompt:'select_account'
+        }
+      }
     });
     if(error){
-      if(resultEl) resultEl.textContent='GMS 기록 저장 실패 · '+error.message;
-      return {saved:false,error};
+      console.error('[IDP GMS] Google login failed:',error);
+      const result = $('loginResult');
+      if(result) result.textContent='Google 로그인 시작 실패: '+error.message;
     }
-    const estimatedPoints=Math.floor(minutes/10)*2;
-    if(resultEl) resultEl.textContent=`✅ GMS 기록 저장 완료 · ${minutes}분${estimatedPoints>0?` · +${estimatedPoints} G-POINT`:''}`;
-    return {saved:true,minutes,estimatedPoints};
   }
 
-  client?.auth.onAuthStateChange(()=>setTimeout(refresh,80));
-  window.addEventListener('load',()=>setTimeout(refresh,120));
+  async function logout(){
+    await client.auth.signOut();
+    await refreshLoginUI();
+  }
+
+  async function saveSimulatorRecord(payload){
+    const member = window.IDP_GMS_MEMBER;
+    if(!member){
+      return {ok:false,reason:'GMS 비로그인'};
+    }
+    const params = {
+      p_member_id: member.id,
+      p_organization_code: 'IDP',
+      p_simulator_key: String(payload.simulator_key || 'IDP-SIM'),
+      p_simulator_title: String(payload.simulator_title || 'IDP Drone Simulator'),
+      p_minutes: Math.max(1, Number(payload.minutes || 1)),
+      p_level_or_mission: String(payload.level_or_mission || '')
+    };
+    const {error} = await client.rpc('gms_record_simulator_activity', params);
+    if(error) return {ok:false,reason:error.message};
+    return {ok:true};
+  }
+  window.IDP_GMS_SAVE_SIMULATOR = saveSimulatorRecord;
+
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    const verify = $('verifyId');
+    if(verify){
+      verify.addEventListener('click', async (e)=>{
+        e.preventDefault();
+        if(verify.dataset.mode==='logout') await logout();
+        else await googleLogin();
+      }, true);
+    }
+    await refreshLoginUI();
+  });
+
+  client.auth.onAuthStateChange(async ()=>{ await refreshLoginUI(); });
 })();

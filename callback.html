@@ -1,5 +1,75 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>IDP GMS 로그인</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#06111b;color:#e9f5ff;font-family:Arial,"Noto Sans KR",sans-serif}.box{width:min(520px,calc(100% - 30px));padding:28px;border:1px solid #1d607e;border-radius:18px;background:#091d2b;box-shadow:0 20px 60px #0008}.box h1{margin:0 0 12px}.box p{color:#9fb8c7;line-height:1.7}</style></head><body><div class="box"><h1>IDP · GMS 로그인 처리</h1><p id="msg">Google 인증정보를 확인하고 있습니다…</p></div><script>
-const URL='https://ojxarsfaewehwjidwgac.supabase.co',KEY='sb_publishable_ZoAZrV5rDmYDLxhXlnEXCw_lPqJfin0';
-const db=supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});const msg=document.getElementById('msg');
-(async()=>{try{const q=new URLSearchParams(location.search),err=q.get('error_description')||q.get('error');if(err)throw new Error(err);const code=q.get('code');if(code){const r=await db.auth.exchangeCodeForSession(code);if(r.error)throw r.error;}const s=await db.auth.getSession();if(!s.data.session)throw new Error('Supabase 세션이 생성되지 않았습니다.');msg.textContent='로그인 성공 · IDP 시뮬레이터로 이동합니다…';history.replaceState({},document.title,location.pathname);setTimeout(()=>location.replace(new URL('./',location.href).href),300);}catch(e){msg.textContent='로그인 처리 오류: '+(e?.message||e);}})();
-</script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020711">
+  <title>IDP GMS 로그인 처리</title>
+  <style>
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#020711;color:#eaf6ff;font-family:Arial,sans-serif}
+    .box{width:min(520px,90vw);padding:28px;border:1px solid #2d5366;border-radius:16px;background:#08131f;text-align:center}
+    h1{font-size:22px;margin:0 0 10px}.sub{color:#93afc0;font-size:14px;line-height:1.6}.gold{color:#f2c85b}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>IDP · GMS 로그인 처리 중</h1>
+    <div class="sub" id="msg">Google 인증 결과를 확인하고 시뮬레이터로 돌아갑니다.</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script>
+  (async function(){
+    const HOME='https://jeonseongkweon-cloud.github.io/idp-simulator/';
+    const msg=document.getElementById('msg');
+
+    function cfg(){
+      const c=window.IDP_CONFIG||window.CONFIG||window.SUPABASE_CONFIG||{};
+      return {
+        url:c.supabaseUrl||c.SUPABASE_URL||window.SUPABASE_URL,
+        key:c.supabaseAnonKey||c.SUPABASE_ANON_KEY||window.SUPABASE_ANON_KEY
+      };
+    }
+
+    const {url,key}=cfg();
+    if(!url||!key||!window.supabase){
+      msg.innerHTML='<span class="gold">Supabase 설정을 찾지 못했습니다.</span>';
+      setTimeout(()=>location.replace(HOME),1600);
+      return;
+    }
+
+    const client=window.supabase.createClient(url,key);
+
+    try{
+      const href=new URL(location.href);
+      const code=href.searchParams.get('code');
+      const error=href.searchParams.get('error');
+      const errorDescription=href.searchParams.get('error_description');
+
+      if(error){
+        msg.innerHTML='<span class="gold">로그인 오류:</span> '+(errorDescription||error);
+        setTimeout(()=>location.replace(HOME),1800);
+        return;
+      }
+
+      if(code){
+        const {error:exError}=await client.auth.exchangeCodeForSession(code);
+        if(exError) throw exError;
+      }
+
+      const {data:{session}}=await client.auth.getSession();
+      if(session?.user){
+        msg.textContent='GMS 로그인 완료. IDP 시뮬레이터로 돌아갑니다.';
+      } else {
+        msg.textContent='로그인 세션을 확인하지 못했습니다. 시뮬레이터로 돌아갑니다.';
+      }
+    }catch(err){
+      msg.innerHTML='<span class="gold">로그인 처리 실패:</span> '+(err?.message||String(err));
+    }
+
+    setTimeout(()=>location.replace(HOME),900);
+  })();
+  </script>
+</body>
+</html>
