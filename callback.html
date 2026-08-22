@@ -24,51 +24,70 @@
     const HOME='https://jeonseongkweon-cloud.github.io/idp-simulator/';
     const msg=document.getElementById('msg');
 
-    function cfg(){
+    function getCfg(){
       const c=window.IDP_CONFIG||window.CONFIG||window.SUPABASE_CONFIG||{};
       return {
-        url:c.supabaseUrl||c.SUPABASE_URL||window.SUPABASE_URL,
-        key:c.supabaseAnonKey||c.SUPABASE_ANON_KEY||window.SUPABASE_ANON_KEY
+        url:c.supabaseUrl||c.SUPABASE_URL||window.SUPABASE_URL||'',
+        key:c.supabaseKey||c.supabaseAnonKey||c.SUPABASE_KEY||c.SUPABASE_ANON_KEY||window.SUPABASE_KEY||window.SUPABASE_ANON_KEY||''
       };
     }
 
-    const {url,key}=cfg();
-    if(!url||!key||!window.supabase){
-      msg.innerHTML='<span class="gold">Supabase 설정을 찾지 못했습니다.</span>';
-      setTimeout(()=>location.replace(HOME),1600);
+    const {url,key}=getCfg();
+
+    if(!window.supabase){
+      msg.innerHTML='<span class="gold">Supabase SDK를 불러오지 못했습니다.</span>';
+      setTimeout(()=>location.replace(HOME),1800);
       return;
     }
 
-    const client=window.supabase.createClient(url,key);
+    if(!url||!key){
+      msg.innerHTML='<span class="gold">Supabase 설정을 찾지 못했습니다.</span>';
+      console.warn('[IDP CALLBACK] config missing',{url:!!url,key:!!key,config:window.IDP_CONFIG});
+      setTimeout(()=>location.replace(HOME),1800);
+      return;
+    }
+
+    const client=window.supabase.createClient(url,key,{
+      auth:{
+        persistSession:true,
+        autoRefreshToken:true,
+        detectSessionInUrl:true,
+        flowType:'pkce'
+      }
+    });
 
     try{
-      const href=new URL(location.href);
-      const code=href.searchParams.get('code');
-      const error=href.searchParams.get('error');
-      const errorDescription=href.searchParams.get('error_description');
+      const current=new URL(location.href);
+      const error=current.searchParams.get('error');
+      const errorDescription=current.searchParams.get('error_description');
+      const code=current.searchParams.get('code');
 
       if(error){
-        msg.innerHTML='<span class="gold">로그인 오류:</span> '+(errorDescription||error);
-        setTimeout(()=>location.replace(HOME),1800);
+        msg.innerHTML='<span class="gold">Google 로그인 오류:</span> '+(errorDescription||error);
+        setTimeout(()=>location.replace(HOME),2200);
         return;
       }
 
       if(code){
-        const {error:exError}=await client.auth.exchangeCodeForSession(code);
-        if(exError) throw exError;
+        const {error:exchangeError}=await client.auth.exchangeCodeForSession(code);
+        if(exchangeError) throw exchangeError;
       }
 
-      const {data:{session}}=await client.auth.getSession();
+      const {data:{session},error:sessionError}=await client.auth.getSession();
+      if(sessionError) throw sessionError;
+
       if(session?.user){
-        msg.textContent='GMS 로그인 완료. IDP 시뮬레이터로 돌아갑니다.';
-      } else {
-        msg.textContent='로그인 세션을 확인하지 못했습니다. 시뮬레이터로 돌아갑니다.';
+        msg.innerHTML='✅ GMS 로그인 완료<br><span class="gold">'+session.user.email+'</span><br>시뮬레이터로 돌아갑니다.';
+        setTimeout(()=>location.replace(HOME),900);
+      }else{
+        msg.innerHTML='<span class="gold">로그인 세션을 확인하지 못했습니다.</span><br>시뮬레이터로 돌아갑니다.';
+        setTimeout(()=>location.replace(HOME),1800);
       }
     }catch(err){
-      msg.innerHTML='<span class="gold">로그인 처리 실패:</span> '+(err?.message||String(err));
+      console.error('[IDP CALLBACK]',err);
+      msg.innerHTML='<span class="gold">로그인 처리 실패:</span><br>'+(err?.message||String(err));
+      setTimeout(()=>location.replace(HOME),2600);
     }
-
-    setTimeout(()=>location.replace(HOME),900);
   })();
   </script>
 </body>
