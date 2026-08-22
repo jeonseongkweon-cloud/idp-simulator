@@ -425,3 +425,10 @@ footer{padding:24px 3vw;background:#01050b;border-top:1px solid #163045;color:#8
 .sim-mode-id>div{display:flex;flex-direction:column}
 .sim-version{font-style:normal;font-size:11px;font-weight:900;letter-spacing:.08em;color:#ffd85a;border:1px solid rgba(255,216,90,.55);background:rgba(255,216,90,.08);padding:4px 8px;border-radius:999px;white-space:nowrap}
 @media(max-width:760px){.sim-version{font-size:9px;padding:3px 6px}}
+
+
+/* ===== v7.1 GMS MEMBER LINK ===== */
+.gms-hidden{display:none!important}
+.gms-login-help{color:#9fb8c7;font-size:12px;line-height:1.65;margin:8px 0 14px}
+.gms-save-result{margin:14px 0 2px;padding:11px 13px;border:1px solid rgba(75,210,255,.35);border-radius:9px;background:rgba(5,28,42,.72);color:#bfefff;font-size:12px;line-height:1.55}
+#googleLogout{margin-top:8px}

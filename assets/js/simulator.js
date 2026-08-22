@@ -460,7 +460,9 @@
     const titles={basic:'LEVEL 1 COMPLETE',hover:'LEVEL 2 · 2.5D GATE FLIGHT COMPLETE',rings:'LEVEL 3 RING COURSE COMPLETE',search:'LEVEL 4 SEARCH COMPLETE',wildfire:'LEVEL 5 WILDFIRE REPORT COMPLETE',night:'LEVEL 6 NIGHT FLIGHT COMPLETE',disaster:'LEVEL 7 DISASTER RECON COMPLETE',patrol:'LEVEL 8 PATROL COMPLETE',rescue:'LEVEL 9 INTEGRATED MISSION COMPLETE',master:'IDP MASTER CHALLENGE COMPLETE'};
     const messages={basic:`이륙 → ${maxHomeDistance.toFixed(0)}m 전진 → 180° 선회 → HOME 복귀 → 정밀착륙을 완료했습니다.`,hover:'2.5D 원근 코스에서 3개 게이트 통과 · 180° 선회 · HOME 복귀를 완료했습니다.',rings:'장애물 링 코스를 완료했습니다.',search:'실종자 위치 확인 임무를 완료했습니다.',wildfire:'산불 좌표 보고 임무를 완료했습니다.',night:'야간 비행 임무를 완료했습니다.',disaster:'재난지역 정찰 임무를 완료했습니다.',patrol:'안전 순찰 임무를 완료했습니다.',rescue:'종합 구조·순찰 임무를 완료했습니다.',master:'MASTER CHALLENGE를 완료했습니다.'};
     $('#completeTitle').textContent=titles[mode]; $('#stars').textContent='★'.repeat(stars)+'☆'.repeat(3-stars); $('#finalScore').textContent=Math.round(score); $('#finalTime').textContent=nowTime(); $('#landingQuality').textContent=landingBonus>=750?'S':landingBonus>=600?'A':'B'; $('#completeMessage').textContent=messages[mode];
-    window.IDPProgress?.unlockNext(currentLevel); setTimeout(()=>$('#completeModal').classList.add('open'),650); window.IDPTone?.(880,.4);
+    window.IDPProgress?.unlockNext(currentLevel);
+    window.IDPGMS?.recordCompletion({level:currentLevel,mode,seconds:sec,score,stars});
+    setTimeout(()=>$('#completeModal').classList.add('open'),650); window.IDPTone?.(880,.4);
   }
 
   $('#exitSim').onclick=close; $('#pauseBtn').onclick=()=>{paused=!paused;clearHeld();$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'}; const resetBtn=$('#resetFlightBtn'); if(resetBtn) resetBtn.onclick=()=>{resetCommon();setupMode();setMission(0);$('#pauseBtn').textContent='PAUSE';flashComplete('FLIGHT RESET')};

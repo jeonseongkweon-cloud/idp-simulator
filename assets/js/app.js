@@ -55,7 +55,19 @@
     if(t==="hover")startLevel(2,"hover");
     if(t==="wildfire")startLevel(5,"wildfire");
   });
-  $("#verifyId").onclick=()=>{const id=$("#memberId").value.trim().toUpperCase(),out=$("#loginResult");if(["IDP2026","IDP-KR-000001"].includes(id)){out.innerHTML=`✅ 인증 성공: <b>${id}</b>`;tone(720,.2)}else{out.innerHTML=`❌ 데모 ID <b>IDP2026</b>을 입력해 보세요.`;tone(130,.2,"square")}};
+
+
+  const googleLoginBtn=$("#googleLogin"), googleLogoutBtn=$("#googleLogout"), loginResult=$("#loginResult");
+  if(googleLoginBtn) googleLoginBtn.onclick=()=>window.IDPGMS?.login();
+  if(googleLogoutBtn) googleLogoutBtn.onclick=()=>window.IDPGMS?.logout();
+  window.addEventListener("idp-gms-auth",e=>{
+    const d=e.detail||{};
+    if(loginResult) loginResult.innerHTML=d.connected
+      ? `✅ GMS 연결: <b>${d.name||d.email||"회원"}</b><br><small>${d.email||""}</small>`
+      : `비로그인 상태 · LEVEL 1 무료 체험 가능${d.message?`<br><small>${d.message}</small>`:""}`;
+    if(googleLoginBtn) googleLoginBtn.classList.toggle("gms-hidden",!!d.connected);
+    if(googleLogoutBtn) googleLogoutBtn.classList.toggle("gms-hidden",!d.connected);
+  });
 
   window.IDPTone=tone;
   window.IDPProgress={get:progress,unlockNext:(completedLevel)=>setProgress(Math.min(10,completedLevel+1)),render:renderProgress};

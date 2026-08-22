@@ -1,1 +1,1 @@
-window.IDP_CONFIG={version:"5.8",googleSheetEndpoint:"",demoIds:["IDP2026","IDP-KR-000001"]};
+window.IDP_CONFIG={version:"7.1",supabaseUrl:"https://ojxarsfaewehwjidwgac.supabase.co",supabaseKey:"sb_publishable_ZoAZrV5rDmYDLxhXlnEXCw_lPqJfin0"};
