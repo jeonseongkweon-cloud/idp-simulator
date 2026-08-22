@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020711">
-  <title>IDP Drone Simulator v7.1 · GMS</title>
+  <title>IDP Drone Simulator v7.0</title>
   <link rel="icon" href="assets/img/idp-logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
 
@@ -15,7 +15,7 @@
     .developer-credit b{font-size:14px;letter-spacing:.08em;color:#f6d77d;text-shadow:0 0 14px rgba(246,215,125,.22)}
     .developer-credit .ko{font-size:11px;letter-spacing:.08em;color:#9bb7c9;text-transform:none}
 
-    /* ===== v7.1 GMS · LEVEL 2 · 2.5D GATE FLIGHT ===== */
+    /* ===== v7.0 LEVEL 2 · 2.5D GATE FLIGHT ===== */
     .level2-scene{position:absolute;inset:0;display:none;overflow:hidden;pointer-events:none;z-index:2;perspective:760px;transform-style:preserve-3d}
     .simulator-view.level2-25d .level2-scene{display:block}
     .simulator-view.level2-25d .outbound-gate,.simulator-view.level2-25d .hover-zone{display:none!important}
@@ -42,10 +42,10 @@
     <div class="boot-card">
       <img src="assets/img/idp-logo-circle.png" class="boot-logo" alt="IDP">
       <p class="micro">INTERNATIONAL DRONE PATROL</p>
-      <h1>IDP DRONE SIMULATOR <span class="vtag">v7.1 · GMS</span></h1>
+      <h1>IDP DRONE SIMULATOR <span class="vtag">v7.0</span></h1>
       <p>기술로 안전을 지키고, 연대로 세계를 연결합니다.</p>
       <button id="enterSystem" class="btn btn-primary pulse">ENTER IDP SYSTEM</button>
-      <small>v7.1 · GMS LINK · 2.5D Gate Flight / Return-to-Home / Precision Landing</small>
+      <small>v7.0 · 2.5D Gate Flight / Return-to-Home / Precision Landing</small>
       <div class="developer-credit"><span>DEVELOPER</span><b>JEONSEONG KWEON</b><span class="ko">전성권</span></div>
     </div>
   </div>
@@ -53,7 +53,7 @@
   <header class="topbar">
     <a class="brand" href="#home">
       <img src="assets/img/idp-logo.png" alt="">
-      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v7.1 · GMS</small></span>
+      <span><b>국제드론순찰대</b><small>INTERNATIONAL DRONE PATROL · SIMULATOR v7.0</small></span>
     </a>
     <nav>
       <a href="#training">TRAINING</a>
@@ -183,10 +183,11 @@
     <div class="modal-card">
       <button class="modal-close" data-close>×</button>
       <img src="assets/img/idp-logo.png" class="modal-logo" alt="">
-      <p class="micro">SECURE MEMBER ACCESS</p><h3>개인 ID 인증</h3>
-      <input id="memberId" placeholder="예: IDP-KR-000001">
-      <button id="verifyId" class="btn btn-gold">ID 인증하기</button>
-      <div id="loginResult" class="result">데모 ID: <b>IDP2026</b></div>
+      <p class="micro">GMS MEMBER ACCESS</p><h3>Google 회원 로그인</h3>
+      <p class="gms-login-help">GMS 통합회원 계정으로 로그인하면 시뮬레이터 훈련시간·미션·G-POINT가 자동 기록됩니다.</p>
+      <button id="googleLogin" class="btn btn-gold">G&nbsp; Google 계정으로 로그인</button>
+      <button id="googleLogout" class="btn btn-blue gms-hidden">로그아웃</button>
+      <div id="loginResult" class="result">비로그인 상태 · LEVEL 1 무료 체험 가능</div>
     </div>
   </div>
 
@@ -309,6 +310,7 @@
         <div><span>LANDING</span><b id="landingQuality">A</b></div>
       </div>
       <p id="completeMessage">기초 비행 훈련을 완료했습니다.</p>
+      <div id="gmsSaveResult" class="gms-save-result">GMS 비로그인 · 훈련기록은 저장되지 않습니다.</div>
       <div class="complete-actions">
         <button id="retryBtn" class="btn btn-blue">다시 도전</button>
         <button id="homeBtn" class="btn btn-gold">메인 화면</button>
